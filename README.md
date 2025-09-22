@@ -1,6 +1,7 @@
 # Wazuh-Siem
 
 ##Objective
+
 The goal of this project was to gain hands-on experience with SIEM by deploying Wazuh using its official OVA package. This involved exploring its core capabilities, understanding log ingestion and analysis workflows, and ultimately integrating Wazuh with my home lab environment—including a pfSense firewall—for real-time telemetry and threat detection.
 
 <!--
