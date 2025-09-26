@@ -164,6 +164,65 @@ If it says dynamic, DHCP is still active. If it says valid_lft forever, it’s s
 ip r
 cat /etc/resolv.conf
 
+## When nmcli isn’t Available or Used
+
+	• On minimal server installations, NetworkManager (and therefore nmcli) may not be installed by default.
+	• Cloud/OVA appliances (like Wazuh OVA) often rely on lighter or more predictable methods like:
+		○ netplan (Ubuntu Server)
+		○ systemd-networkd
+		○ network-scripts (CentOS/older RHEL)
+		○ Manual ip or ifconfig commands for custom scripts
+
+When it is option:
+
+Setting up a **static IP address** on Ubuntu ensures your system always has the same IP, which is useful for servers, remote access, and network stability. Here’s how you can do it:
+
+### **Steps to Configure a Static IP on Ubuntu**
+#### 1. **Identify Your Network Interface**  
+   Run the following command to list available interfaces (bash)
+
+   nmcli d
+   
+   or  
+
+   ip link
+
+   Find the name of the interface you want to configure (e.g., `enp0s3`).
+
+### 2. **Edit the Netplan Configuration File**  
+   Ubuntu uses **Netplan** for network configuration. Open the configuration file (bash)
+
+   sudo nano /etc/netplan/01-netcfg.yaml
+
+   If the file doesn’t exist, check `/etc/netplan/` for other `.yaml` files.
+
+### 3. **Modify the Configuration**  
+   Add or update the following lines (yaml):
+   
+   network:
+     version: 2
+     renderer: networkd
+     ethernets:
+       enp0s3:
+         dhcp4: no
+         addresses:
+           - 192.168.1.100/24
+         routes:
+           - to: default
+             via: 192.168.1.1
+         nameservers:
+           addresses: [8.8.8.8, 8.8.4.4]
+   
+   Replace `enp0s3` with your actual interface name and adjust the IP, gateway, and DNS settings.
+
+### 4. **Apply the Changes**  
+   Save the file and run (bash)
+   
+   sudo netplan apply
+
+   This will apply the new network settings.
+
+
 
 ## Setup agents and manager for vulnerability scanning
 
