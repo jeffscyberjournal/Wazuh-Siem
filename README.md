@@ -15,17 +15,23 @@ So far I tried installation on proxmox and virtualbox installations:
 
 ### For VirtualBox 
 Download: the Wazuh OVA file from the official Wazuh website.
+
 Import: the OVA file using the "File > Import Appliance" option in VirtualBox.
 
 ### For Proxmox
 Since Proxmox does not directly support OVA files, you need to convert them. 
+
 Extract: the disk image (VMDK file) from the downloaded OVA file. 
+
 Create: a new virtual machine in Proxmox. 
+
 Attach: the extracted VMDK disk image to the new Proxmox VM. 
 Alternatively, use a tool or the tar and qm importovf commands to import and convert the OVA into a format Proxmox can use. 
 
 ### For VMware ESXi
+
 Download: the Wazuh OVA file from the official Wazuh website. 
+
 Import: the OVA directly into VMware ESXi using the platform's interface, typically via the "File > Open" or similar "Import Appliance" optio
 
 ## update using OVA
