@@ -11,6 +11,8 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
   - Windows installation
 - Set static Ip and Confirm DHCP is Off and Static IP is Set
 - Setup agents and manager for vulnerability scanning
+  - Wazuh’s vulnerability detection module reporting outdated CVEs
+
 
 
 ## Installation 
@@ -177,7 +179,8 @@ To implement vulnerability scanning with Wazuh, here's a clear breakdown of what
 
    - Enable the Syscollector module (xml):
  
-	<img width="190" height="137" alt="image" src="https://github.com/user-attachments/assets/55210ac2-30b7-4f7a-a5f6-cc7e861f1cff" />
+	
+<img width="190" height="129" alt="image" src="https://github.com/user-attachments/assets/3ed2ac30-5f7e-49b5-baa9-f624e89127b9" />
 
      
 
@@ -202,7 +205,7 @@ As for hotfixes, adding <hotfixes>yes</hotfixes> is recommended if you want the 
    - On the Wazuh manager, edit the `ossec.conf` file (located at `/var/ossec/etc/ossec.conf`).
    - Find the `<vulnerability-detector>` section and configure it like this (xml):
  
-    <img width="214" height="156" alt="image" src="https://github.com/user-attachments/assets/6f09ca3c-2617-47de-9d95-9a723b309056" />
+   <img width="214" height="145" alt="image" src="https://github.com/user-attachments/assets/7fe94161-f72e-4443-902b-02dcb1217b42" />
 
  
 
@@ -234,4 +237,54 @@ As for hotfixes, adding <hotfixes>yes</hotfixes> is recommended if you want the 
 #### 2. Check Vulnerability Detection Alerts:
    - From the dashboard, navigate to the **Vulnerability Detection** section.
    - Review alerts for identified vulnerabilities on the agent's device.
+
+
+## Wazuh’s vulnerability detection module reporting outdated CVEs
+
+Wazuh’s vulnerability detection module reporting outdated CVEs for a newer Ubuntu system that has already patched them. Here's how to address it:
+
+### Why It Happens
+
+	• Wazuh uses NVD (National Vulnerability Database) and vendor feeds to match CVEs against installed packages.
+	• Sometimes, version strings or kernel variants (like HWE) don’t align perfectly with CVE metadata.
+	• This leads to false positives, especially on rolling or patched systems like Ubuntu 22.04 with HWE kernels.
+
+### How to Reduce or Exclude False Positives
+
+#### 1. Update Vulnerability Feed
+
+Make sure your Wazuh manager is pulling the latest CVE data (bash):
+
+/var/ossec/bin/wazuh-modulesd -f -c /var/ossec/etc/ossec.conf
+Or restart the manager to refresh feeds.
+
+#### 2. Use Package Exclusion
+You can exclude specific packages from vulnerability scanning:
+	• Create a file: /var/ossec/etc/shared/default/vulnerability-detection/packages-ignore
+	• Add entries like:
+
+linux-image-6.8.0-51-generic
+linux-generic-hwe-22.04
+This tells Wazuh to skip these packages during CVE matching.
+#### 3. Suppress Specific CVEs
+
+This feature is in development but not yet fully supported. As of now, you can't mark individual CVEs as false positives directly — but you can:
+	• Create a custom rule that sets alert level to 0 for specific CVEs.
+	• Example(xml)
+
+<img width="480" height="98" alt="image" src="https://github.com/user-attachments/assets/82a642a3-7d9d-440e-90f3-bd7629201b9e" />
+
+
+#### 4. Check Package Metadata
+
+Ensure your system reports accurate package versions (bash)
+
+dpkg -l | grep linux
+uname -a
+If your kernel is newer than the CVE’s affected version, it's likely a false positive.
+
+### Reference Case
+
+A similar issue was reported for CVE-2024-38541 on Ubuntu 22.04 with HWE kernel. The kernel was patched, but Wazuh still flagged it due to version mismatch.
+
 
