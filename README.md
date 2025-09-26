@@ -11,11 +11,13 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
     - Remove agents Ubuntu
   - Windows installation
     - Remove agent Windows
+- Change IP agent point toward manger
 - Set static Ip and Confirm DHCP is Off and Static IP is Set
   - When nmcli isn’t Available or Used
 - Setup agents and manager for vulnerability scanning
   - Wazuh’s vulnerability detection module reporting outdated CVEs
   - Auditd Tracking system-level events like file access
+  - Tcpdump test incoming traffic
 
 
 
@@ -166,16 +168,15 @@ sudo rm -rf /var/ossec/
 For more details, check out [this guide](https://documentation.wazuh.com/current/installation-guide/uninstalling-wazuh/agent.html) or [this documentation](https://documentation.wazuh.com/current/user-manual/agent/agent-management/remove-agents/remove.html). 
 
 
-# Windows:
+## Windows:
 Install Wazuh Agent (using powershell):
 
 Invoke-WebRequest -Uri https://packages.wazuh.com/4.x/windows/wazuh-agent-4.1.5-1.msi -OutFile wazuh-agent.msi
 Start-Process -FilePath .\wazuh-agent.msi -ArgumentList "/q WAZUH_MANAGER='<WAZUH_MANAGER_IP>' WAZUH_REGISTRATION_SERVER='<WAZUH_MANAGER_IP>' WAZUH_AGENT_GROUP='default'" -Wait
 
-### Register Agent:
+### Register Agent (powershell):
 
-#### powershell
-& 'C:\Program Files (x86)\ossec-agent\agent-auth.exe' -m <WAZUH_MANAGER_IP>
+'C:\Program Files (x86)\ossec-agent\agent-auth.exe' -m <WAZUH_MANAGER_IP>
 
 ### Edit Configuration File:
 
@@ -184,9 +185,8 @@ C:\Program Files (x86)\ossec-agent\ossec.conf
 <img width="221" height="105" alt="image" src="https://github.com/user-attachments/assets/6506d35b-309e-4612-9260-7e1f8fec2533" />
 
 
-### Restart Agent:
+### Restart Agent (powershell):
 
-#### powershell
 Restart-Service -Name wazuh
 
 
@@ -233,6 +233,30 @@ Removing the **Wazuh agent** on Windows is slightly different from Ubuntu. Here�
    
 
 For more details, check out [this guide](https://documentation.wazuh.com/current/installation-guide/uninstalling-wazuh/agent.html) or [this documentation](https://documentation.wazuh.com/current/user-manual/agent/agent-management/remove-agents/index.html).
+
+
+## Change IP agent point toward manger
+
+Switching the agent's manager target from 192.168.0.134 to 192.168.0.174. Here's the cleanest way to do it on Ubuntu:
+
+### 1. Edit the agent config file (bash):
+
+<img width="270" height="183" alt="image" src="https://github.com/user-attachments/assets/0cbd88e5-73b6-44b2-917e-296ebfb0b002" />
+
+
+### 2. (Optional but recommended): If you're using agent-auth and want to ensure proper re-registration (bash):
+
+sudo /var/ossec/bin/agent-auth -m 192.168.0.Y
+
+### 3. Restart the agent (bash):
+
+sudo systemctl restart wazuh-agent
+
+Confirm the agent shows up on the manager (Y): On the manager (bash):
+
+/var/ossec/bin/agent_control -l
+
+
 
 
 ## Set static Ip and Confirm DHCP is Off and Static IP is Set
@@ -474,4 +498,64 @@ For example, to track all commands run as root, you might add (bash)
 
 -a exit,always -F arch=b64 -F euid=0 -S execve -k audit-wazuh-c
 Then Wazuh can alert when something sketchy like ncat or tcpdump is executed unexpectedly.
+
+
+## Tcpdump test incoming traffic
+
+To capture ICMP packets from 192.168.0.254 using tcpdump, you can run:
+
+sudo tcpdump -i eth0 icmp and src host 192.168.0.254
+	• src host 192.168.0.254: Limits capture to packets originating from that IP.
+
+If you want to see both requests and replies involving that IP:
+
+sudo tcpdump -i eth0 icmp and host 192.168.0.254
+
+And for verbose output with packet details:
+
+sudo tcpdump -vv -i eth0 icmp and host 192.168.0.254
+
+
+To filter traffic by port 514 using tcpdump, you’ll want to specify the protocol and port in your capture expression. Port 514 is commonly used for syslog over UDP or TCP, depending on the setup.
+
+How to send a basic packet for test purpose
+Send TCP packet
+echo "Test message to port 514" | nc 192.168.0.x 514
+Send UDP packet 
+echo "Test message" | nc -u -q1 192.168.0.x 514
+
+### Examples for Capturing Port 514 Traffic
+
+#### 1. UDP traffic on port 514
+
+sudo tcpdump -i eth0 udp port 514
+
+#### 2. TCP traffic on port 514
+
+sudo tcpdump -i eth0 tcp port 514
+
+#### 3. All traffic involving port 514 (TCP or UDP)
+
+sudo tcpdump -i eth0 port 514
+To capture traffic from 192.168.0.x on port 514:
+
+sudo tcpdump -i eth0 src host 192.168.0.x and port 514
+Or to capture any traffic involving 192.168.0.x and port 514:
+
+sudo tcpdump -i eth0 host 192.168.0.x and port 514
+
+#### Add Verbosity or Save to File
+	• Verbose output (bash):
+	
+sudo tcpdump -vv -i eth0 port 514
+	• Show the packet contents a better option
+	sudo tcpdump -nn -A -i <interface> udp port 514
+	• Write to file for later analysis (bash):
+
+sudo tcpdump -i eth0 port 514 -w syslog_capture.pcap
+
+
+
+
+
 
