@@ -8,8 +8,11 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
 - Install and update using OVA
 - Installing agents Covering 
   - Ubuntu linux (DEBIAN) installation
+    - 
   - Windows installation
+    - 
 - Set static Ip and Confirm DHCP is Off and Static IP is Set
+  - 	
 - Setup agents and manager for vulnerability scanning
   - Wazuh’s vulnerability detection module reporting outdated CVEs
 
@@ -99,7 +102,70 @@ nano /var/ossec/etc/ossec.conf
 
 sudo systemctl restart wazuh-agent
 
-### Windows:
+
+## Remove agents Ubuntu
+
+To remove the **Wazuh user agent** on Ubuntu using the **Wazuh manager**, follow these steps:
+
+### **Using the CLI on the Wazuh Manager**
+#### 1. **Access the Wazuh Manager**  
+   Run the following command on the Wazuh server (bash)
+
+   /var/ossec/bin/manage_agents
+
+#### 2. **Select the Remove Option**  
+   You'll see a menu like this:
+  
+   ****************************************
+   * Wazuh v4.8.0 Agent manager. *
+   * The following options are available: *
+   ****************************************
+   (A)dd an agent (A).
+   (E)xtract key for an agent (E).
+   (L)ist already added agents (L).
+   (R)emove an agent (R).
+   (Q)uit.
+   Choose your action: A,E,L,R or Q:
+   
+   Type `R` to remove an agent.
+
+#### 3. **Select the Agent to Remove**  
+   The system will list available agents:
+   
+   Available agents:
+   ID: 002, Name: Ubuntu, IP: any
+   Provide the ID of the agent to be removed (or '\q' to quit): 002
+   
+   Enter the **agent ID** you want to remove.
+
+#### 4. **Confirm Removal**  
+   The system will ask for confirmation:
+   
+   Confirm deleting it?(y/n): y
+   
+   Type `y` to proceed.
+
+#### 5. **Exit the Manager**  
+
+   Once the agent is removed, exit the manager:
+   
+   manage_agents: Exiting.
+   
+
+### **Alternative: Using APT**
+If you want to **completely uninstall** the Wazuh agent from Ubuntu, run (bash):
+
+sudo apt-get remove --purge wazuh-agent
+
+Then, delete any remaining files (bash):
+
+sudo rm -rf /var/ossec/
+
+
+For more details, check out [this guide](https://documentation.wazuh.com/current/installation-guide/uninstalling-wazuh/agent.html) or [this documentation](https://documentation.wazuh.com/current/user-manual/agent/agent-management/remove-agents/remove.html). 
+
+
+# Windows:
 Install Wazuh Agent (using powershell):
 
 Invoke-WebRequest -Uri https://packages.wazuh.com/4.x/windows/wazuh-agent-4.1.5-1.msi -OutFile wazuh-agent.msi
@@ -121,6 +187,51 @@ C:\Program Files (x86)\ossec-agent\ossec.conf
 
 #### powershell
 Restart-Service -Name wazuh
+
+
+## Remove agent Windows
+
+Removing the **Wazuh agent** on Windows is slightly different from Ubuntu. Here’s how you can do it:
+
+### **Using the Wazuh Manager (CLI)**
+
+#### 1. Open a **Command Prompt** as Administrator.
+
+#### 2. Navigate to the Wazuh installation directory (bash):
+
+   cd "C:\Program Files (x86)\ossec-agent"
+   
+#### 3. Run the **manage_agents** tool (bash):
+
+   manage_agents.exe
+   
+#### 4. Select the **Remove Agent** option (`R`), then enter the agent ID.
+
+#### 5. Confirm the removal when prompted.
+
+### **Uninstalling via Windows Installer**
+
+#### 1. Open **Command Prompt** as Administrator.
+
+#### 2. Run the following command (bash):
+
+   msiexec.exe /x wazuh-agent-4.11.1-1.msi /qn
+   
+   Replace `wazuh-agent-4.11.1-1.msi` with the correct version installed on your system.
+
+### **Alternative: Using PowerShell**
+
+#### 1. Open **PowerShell** as Administrator.
+#### 2. Run (powershell):
+
+   Get-WmiObject -Query "SELECT * FROM Win32_Product WHERE Name='Wazuh Agent'" | ForEach-Object { $_.Uninstall() }
+   
+#### 3. Delete any remaining files (powershell):
+
+   Remove-Item -Recurse -Force "C:\Program Files (x86)\ossec-agent"
+   
+
+For more details, check out [this guide](https://documentation.wazuh.com/current/installation-guide/uninstalling-wazuh/agent.html) or [this documentation](https://documentation.wazuh.com/current/user-manual/agent/agent-management/remove-agents/index.html).
 
 
 ## Set static Ip and Confirm DHCP is Off and Static IP is Set
