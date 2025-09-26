@@ -5,26 +5,78 @@
 The goal of this project was to gain hands-on experience with SIEM by deploying Wazuh using its official OVA package. This involved exploring its core capabilities, understanding log ingestion and analysis workflows, and ultimately integrating Wazuh with my home lab environment—including a pfSense firewall—for real-time telemetry and threat detection.
 
 ## Sections learned about wazuh
-
+- Install and update using OVA
 - Installing agents Covering 
   - Ubuntu linux (DEBIAN) installation
   - Windows installation
 
+## Installation 
+So far I tried installation on proxmox and virtualbox installations:
+
+### For VirtualBox 
+Download: the Wazuh OVA file from the official Wazuh website.
+Import: the OVA file using the "File > Import Appliance" option in VirtualBox.
+
+### For Proxmox
+Since Proxmox does not directly support OVA files, you need to convert them. 
+Extract: the disk image (VMDK file) from the downloaded OVA file. 
+Create: a new virtual machine in Proxmox. 
+Attach: the extracted VMDK disk image to the new Proxmox VM. 
+Alternatively, use a tool or the tar and qm importovf commands to import and convert the OVA into a format Proxmox can use. 
+
+### For VMware ESXi
+Download: the Wazuh OVA file from the official Wazuh website. 
+Import: the OVA directly into VMware ESXi using the platform's interface, typically via the "File > Open" or similar "Import Appliance" optio
+
+## update using OVA
+
+
+The OVA from the official Wazuh website I used was a RHEL/CentOS-based system, so this will require using yum:
+
+### 1. Stop Wazuh services (Bash):
+
+sudo systemctl stop wazuh-manager
+sudo systemctl stop wazuh-dashboard
+sudo systemctl stop wazuh-indexer
+
+### 2. Update the Wazuh repository (if needed, in bash):
+
+sudo yum clean all
+sudo yum makecache
+
+### 3. Upgrade Wazuh components (Bash):
+
+sudo yum update wazuh-manager wazuh-dashboard wazuh-indexer
+
+### 4. Start services again (Bash):
+
+sudo systemctl start wazuh-indexer
+sudo systemctl start wazuh-manager
+sudo systemctl start wazuh-dashboard
+
+### 5. Verify the upgrade: You can check the version with (Bash):
+
+/var/ossec/bin/wazuh-control info
+If you’re running a multi-node setup or using custom configurations, it’s best to follow the official Wazuh upgrade guide to avoid version mismatches or config overwrites.
+<img width="503" height="449" alt="image" src="https://github.com/user-attachments/assets/7caea149-a78f-4ffe-aebd-07cfc5063b45" />
+
+
+
+
+
 
 
 ## Installing agents
-This section covers basic agent installation on Ubuntu (Debian-based) and Windows systems, as part of integrating Wazuh into a home lab SIEM setup. Here is the manual method as apposed to the method through wazuh interface. I found the wazuh interface did not work well for Ubuntu agent and required either installation of agent from the Wazuh home page or using a manual install.
+This section covers basic agent installation on Ubuntu (Debian-based) and Windows systems, as part of integrating Wazuh into a home lab SIEM setup. Here is the manual method as apposed to the method through wazuh interface. I found the wazuh interface did not work well for Ubuntu agent and required either installation of agent from the Wazuh home page or using a manual install. Installing the agents appeared straight forward through the wazuh interface, working perfectly for Windows except Ubuntu agent seemed to fail. The following manual method works fine for either.
 
 ### 🐧 Ubuntu (Debian-based)
 Install Wazuh Agent:
 
 curl -so wazuh-agent.deb https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-agent/wazuh-agent_4.1.5-1_amd64.deb && \
+
 sudo WAZUH_MANAGER='<WAZUH_MANAGER_IP>' WAZUH_AGENT_GROUP='default' dpkg -i ./wazuh-agent.deb
-
 sudo systemctl daemon-reload
-
 sudo systemctl enable wazuh-agent
-
 sudo systemctl start wazuh-agent
 
 ### Register Agent:
@@ -42,10 +94,9 @@ nano /var/ossec/etc/ossec.conf
 
 sudo systemctl restart wazuh-agent
 
-### Windows
-Install Wazuh Agent:
+### Windows:
+Install Wazuh Agent (using powershell):
 
-powershell
 Invoke-WebRequest -Uri https://packages.wazuh.com/4.x/windows/wazuh-agent-4.1.5-1.msi -OutFile wazuh-agent.msi
 Start-Process -FilePath .\wazuh-agent.msi -ArgumentList "/q WAZUH_MANAGER='<WAZUH_MANAGER_IP>' WAZUH_REGISTRATION_SERVER='<WAZUH_MANAGER_IP>' WAZUH_AGENT_GROUP='default'" -Wait
 
