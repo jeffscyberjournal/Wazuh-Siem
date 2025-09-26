@@ -555,7 +555,59 @@ sudo tcpdump -vv -i eth0 port 514
 sudo tcpdump -i eth0 port 514 -w syslog_capture.pcap
 
 
+## Common Reasons pfSense Logs Don’t Reach Wazuh Manager
+
+### 1. Remote Logging Misconfiguration
+	• Go to Status → System Logs → Settings → Remote Logging Options
+	• Enable Remote Logging
+	• Set Log Format to BSD
+	• Add your Wazuh Manager’s IP and port (usually 514/UDP)
+	• Check Everything to forward all logs
+
+### 3. Missing Hostname in Syslog Headers
+	• pfSense often omits hostnames in syslog headers, which breaks Wazuh’s pre-decoder
+	• Workaround: Use Syslog-ng on pfSense to reformat logs before sending to Wazuh
+
+### 4. Firewall Blocking Port 514
+	• On Wazuh Manager, ensure port 514/UDP is open (bash):
+
+sudo ufw allow 514/udp
+
+### 5. No Decoder or Rule Match
+	• Wazuh needs the 0455-pfsense_decoders.xml and 0540-pfsense_rules.xml files
+	• You can override default rules to log drop events by removing <options>no_log</options>
 
 
+## Check syslog and Enable syslog collection on wazuh
+
+### Troubleshooting Access to archives.log
+
+#### 1. Check File Existence
+
+Run:
+ls -l /var/ossec/logs/archives/
+If archives.log isn’t listed, it may not be created yet—especially if **logall** <!-- <logall> --> isn’t enabled or no logs are being archived.
+2. Verify Permissions
+
+Try:
+	• sudo ls -l /var/ossec/logs/archives/archives.log
+If the file exists but you still can’t read it, check ownership:
+	• stat /var/ossec/logs/archives/archives.log
+
+You may need to run as root or ensure your user is in the ossec group.
+3. Enable Archiving
+In /var/ossec/etc/ossec.conf, confirm this block exists (xml):
+<!-- <global>
+  <logall>yes</logall>
+</global> -->
+<img width="159" height="59" alt="image" src="https://github.com/user-attachments/assets/c09ca37b-68c4-444e-a19e-f5bdbec00696" />
+
+Then restart the manager:
+	• sudo systemctl restart wazuh-manager
+4. Check for Log Rotation
+Sometimes archives.log is rotated and renamed. Try:
+bash
+	• ls /var/ossec/logs/archives/archives.log*
+You might find archives.log.1, .gz, or other rotated versions.
 
 
