@@ -34,8 +34,8 @@ Download: the Wazuh OVA file from the official Wazuh website.
 
 Import: the OVA directly into VMware ESXi using the platform's interface, typically via the "File > Open" or similar "Import Appliance" optio
 
-## update using OVA
 
+## update using OVA
 
 The OVA from the official Wazuh website I used was a RHEL/CentOS-based system, so this will require using yum:
 
@@ -64,13 +64,8 @@ sudo systemctl start wazuh-dashboard
 
 /var/ossec/bin/wazuh-control info
 If you’re running a multi-node setup or using custom configurations, it’s best to follow the official Wazuh upgrade guide to avoid version mismatches or config overwrites.
+
 <img width="503" height="449" alt="image" src="https://github.com/user-attachments/assets/7caea149-a78f-4ffe-aebd-07cfc5063b45" />
-
-
-
-
-
-
 
 ## Installing agents
 This section covers basic agent installation on Ubuntu (Debian-based) and Windows systems, as part of integrating Wazuh into a home lab SIEM setup. Here is the manual method as apposed to the method through wazuh interface. I found the wazuh interface did not work well for Ubuntu agent and required either installation of agent from the Wazuh home page or using a manual install. Installing the agents appeared straight forward through the wazuh interface, working perfectly for Windows except Ubuntu agent seemed to fail. The following manual method works fine for either.
