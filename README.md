@@ -9,6 +9,8 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
 - Installing agents Covering 
   - Ubuntu linux (DEBIAN) installation
   - Windows installation
+- Set static Ip and Confirm DHCP is Off and Static IP is Set
+
 
 ## Installation 
 So far I tried installation on proxmox and virtualbox installations:
@@ -65,7 +67,6 @@ sudo systemctl start wazuh-dashboard
 /var/ossec/bin/wazuh-control info
 If you’re running a multi-node setup or using custom configurations, it’s best to follow the official Wazuh upgrade guide to avoid version mismatches or config overwrites.
 
-<img width="503" height="449" alt="image" src="https://github.com/user-attachments/assets/7caea149-a78f-4ffe-aebd-07cfc5063b45" />
 
 ## Installing agents
 This section covers basic agent installation on Ubuntu (Debian-based) and Windows systems, as part of integrating Wazuh into a home lab SIEM setup. Here is the manual method as apposed to the method through wazuh interface. I found the wazuh interface did not work well for Ubuntu agent and required either installation of agent from the Wazuh home page or using a manual install. Installing the agents appeared straight forward through the wazuh interface, working perfectly for Windows except Ubuntu agent seemed to fail. The following manual method works fine for either.
@@ -117,3 +118,46 @@ C:\Program Files (x86)\ossec-agent\ossec.conf
 
 #### powershell
 Restart-Service -Name wazuh
+
+
+## Set static Ip and Confirm DHCP is Off and Static IP is Set
+
+### 1. List Network Config Files (bash)
+   
+ls /etc/systemd/network/
+Look for files like 10-eth0.network, 20-static.network, etc.
+
+### 2. Inspect the Active Config (bash)
+
+cat /etc/systemd/network/*.network
+You're looking for something like:
+
+ini
+[Match]
+Name=eth0
+[Network]
+DHCP=no
+Address=192.168.x.x/24
+Gateway=192.168.x.x
+DNS=8.8.8.8
+	• DHCP=no confirms DHCP is disabled.
+	• Address= confirms static IP is set.
+
+### 3. Check Runtime Status (bash)
+
+networkctl status eth0
+This shows whether the interface is using static or dynamic addressing.
+
+### 4. Verify IP Assignment (bash)
+
+ip a s eth0
+You should see:
+
+inet 192.168.x.x/24 scope global eth0
+If it says dynamic, DHCP is still active. If it says valid_lft forever, it’s static.
+
+### 5. Confirm Gateway and DNS (bash)
+
+ip r
+cat /etc/resolv.conf
+
