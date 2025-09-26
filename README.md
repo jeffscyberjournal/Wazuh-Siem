@@ -10,6 +10,7 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
   - Ubuntu linux (DEBIAN) installation
   - Windows installation
 - Set static Ip and Confirm DHCP is Off and Static IP is Set
+- Setup agents and manager for vulnerability scanning
 
 
 ## Installation 
@@ -160,4 +161,77 @@ If it says dynamic, DHCP is still active. If it says valid_lft forever, it’s s
 
 ip r
 cat /etc/resolv.conf
+
+
+## Setup agents and manager for vulnerability scanning
+
+To implement vulnerability scanning with Wazuh, here's a clear breakdown of what needs to be done on both the device running the agent and the Wazuh manager:
+
+
+### Steps for the Device with the Agent Installed
+#### 1. Install and Configure the Wazuh Agent:
+
+   - Ensure the Wazuh agent is installed on the device.
+
+   - Edit the agent's `ossec.conf` file (located at `/var/ossec/etc/ossec.conf` on Linux or in the Wazuh installation folder on Windows).
+
+   - Enable the Syscollector module (xml):
+ 
+	<img width="190" height="137" alt="image" src="https://github.com/user-attachments/assets/55210ac2-30b7-4f7a-a5f6-cc7e861f1cff" />
+
+     
+
+#### 2. To scan all ports
+
+Regarding the <ports all="no">yes</ports> configuration in your ossec.conf file, this will enable the Wazuh agent to scan the ports on your system, but it restricts the scan to "yes" specifically, rather than all ports (all="no"). If your goal is to scan all ports, you should update this line to <ports all="yes">yes</ports>.
+As for hotfixes, adding <hotfixes>yes</hotfixes> is recommended if you want the Wazuh agent's Syscollector module to gather information about system hotfixes. Hotfixes provide data about patches applied to your system, which is useful for security and compliance monitoring.
+
+
+
+#### 3. Restart the Agent Service:
+
+   - Restart the Wazuh agent to apply the new settings (bash)
+ 
+     systemctl restart wazuh-agent
+  
+
+### Steps for the Wazuh Manager
+
+#### 1. Enable Vulnerability Detection Module:
+
+   - On the Wazuh manager, edit the `ossec.conf` file (located at `/var/ossec/etc/ossec.conf`).
+   - Find the `<vulnerability-detector>` section and configure it like this (xml):
+ 
+    <img width="214" height="156" alt="image" src="https://github.com/user-attachments/assets/6f09ca3c-2617-47de-9d95-9a723b309056" />
+
+ 
+
+#### 2. Push Configuration to Agents (Optional for Default Settings):
+
+   - If you'd like all agents to use the same configuration, you can set it in `/var/ossec/etc/shared/default/agent.conf` and restart the manager (bash):
+     
+     systemctl restart wazuh-manager
+     
+
+#### 3. Restart Wazuh Manager:
+   - Apply the updated configuration (bash):
+     
+     systemctl restart wazuh-manager
+     
+
+<img width="304" height="337" alt="image" src="https://github.com/user-attachments/assets/5d1d9c57-baa6-4cb3-8967-0e658f6f97d9" />
+
+
+
+
+### Verify and Initiate Scanning
+
+#### 1. Ensure Agent-Manager Connection:
+
+   - On the Wazuh dashboard, confirm that the agent is connected and sending data.
+   - Go to **Endpoints** (or **Agents**) and check the status of the installed agent.
+
+#### 2. Check Vulnerability Detection Alerts:
+   - From the dashboard, navigate to the **Vulnerability Detection** section.
+   - Review alerts for identified vulnerabilities on the agent's device.
 
