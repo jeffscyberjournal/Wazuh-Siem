@@ -18,6 +18,10 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
   - Wazuh’s vulnerability detection module reporting outdated CVEs
   - Auditd Tracking system-level events like file access
   - Tcpdump test incoming traffic
+  - Common Reasons pfSense Logs Don’t Reach Wazuh Manager
+  - Check syslog and Enable syslog collection on wazuh
+
+
 
 
 
@@ -610,4 +614,49 @@ bash
 	• ls /var/ossec/logs/archives/archives.log*
 You might find archives.log.1, .gz, or other rotated versions.
 
+
+## pfsense push a single log on port 514 udp to wazuh manager
+
+### the pfSense shell log test log (bash):
+
+logger -n 192.168.0.x -P 514 -d "Test log from pfSense to Wazuh"
+
+### Breakdown of the Command
+	• logger: Built-in utility to send syslog messages.
+	• -n 192.168.0.x: Target IP address (your Wazuh server).
+	• -P 514: Destination port (default for syslog over UDP).
+	• -d: Use UDP (datagram) instead of TCP.
+	• "Test log from pfSense to Wazuh": The actual message.
+
+#### This sends a single syslog-formatted message directly to Wazuh. You can verify receipt on the Wazuh server using (bash):
+
+sudo tcpdump -i any port 514 -n
+
+Look for the incoming packet and confirm it contains your test message.
+
+#### Would you like help crafting a custom log format or automating periodic log pushes for testing Wazuh rules?
+
+logger -n 192.168.0.x -P 514 -d "Test log from pfSense to Wazuh" -n is illegal comand
+You're right, and great catch — the -n flag isn’t valid in pfSense’s version of logger. The BSD-based logger used in pfSense (FreeBSD) differs from the GNU/Linux version.
+Here’s the correct way to push a single log entry from pfSense to your Wazuh server via UDP port 514:
+
+### Use with nc (Netcat) for Direct UDP Log Transmission (bash)
+
+	• echo "<13>Test log from pfSense to Wazuh" | nc -u -w1 192.168.0.x 514
+
+### Explanation
+	• <13> is the syslog priority value (facility=USER, severity=NOTICE).
+	• nc -u: Sends via UDP
+	• -w1: Waits 1 second before timing out
+	• 192.168.0.x 514: Target Wazuh IP and port
+
+This bypasses the logger utility and sends a properly formatted syslog message directly to Wazuh.
+
+### To Confirm It's Received
+
+#### On Wazuh (bash):
+
+sudo tcpdump -i any port 514 -n
+
+Look for your "Test log from pfSense to Wazuh" entry.
 
