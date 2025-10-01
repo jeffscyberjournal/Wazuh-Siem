@@ -8,6 +8,7 @@
   - 2.7 When nmcli isn’t Available or Used
   - 2.8 Tcpdump test incoming traffic
   - 2.9 pfsense push a single log on port 514 udp to wazuh manager
+  - 2.10 Configure alerting based on alert level to email
 
 
 
@@ -448,3 +449,42 @@ sudo tcpdump -i any port 514 -n
 
 Look for your "Test log from pfSense to Wazuh" entry.
 
+
+
+## 2.10 Configure alerting based on alert level to email
+
+To send email alerts to `myemail@emailprovider.com` for alerts above a certain severity level, follow these steps:
+
+### Step 1: Enable Email Notifications
+
+Edit `/var/ossec/etc/ossec.conf` and modify the `<global>` block:
+
+```xml
+<global>
+  <email_notification>yes</email_notification>
+  <smtp_server>localhost</smtp_server> <!-- Or your SMTP relay -->
+  <email_from>wazuh@yourdomain.com</email_from>
+  <email_to>myemail@emailprovider.com</email_to>
+  <email_maxperhour>100</email_maxperhour>
+</global>
+```
+Replace localhost with your SMTP server if you're not using a local relay like Postfix.
+
+email_from must match the sender address configured in your SMTP relay.
+
+Step 2: Set Alert Threshold
+Still in ossec.conf, configure the <alerts> block:
+
+```xml
+<alerts>
+  <email_alert_level>10</email_alert_level>
+</alerts>
+This means only alerts with level 10 or higher will trigger an email.
+```
+
+You can adjust the level from 1 (low) to 16 (critical), depending on your noise tolerance.
+
+### Step 3: Restart the Wazuh Manager
+Apply the changes (bash):
+
+sudo systemctl restart wazuh-manager
