@@ -1,1 +1,381 @@
+## Force Log Gathering from Wazuh Manager to Agents
 
+Wazuh manager can push configuration changes—including log collection directives—to agents using centralized management via agent.conf.
+
+### 1. Centralized Configuration with agent.conf
+The agent.conf file defines settings that the manager distributes to agents. To request event logs from endpoints:
+
+Open the configuration file:
+
+**sudo nano /var/ossec/etc/shared/agent.conf**
+
+### Add log collection directives:
+```xml
+<localfile>
+  <location>/var/log/syslog</location>
+  <log_format>syslog</log_format>
+</localfile>
+
+<localfile>
+  <location>C:\Windows\System32\winevt\Logs\Security.evtx</location>
+  <log_format>eventchannel</log_format>
+</localfile>
+```
+The first block collects Linux syslog entries.
+
+The second block collects Windows Security event logs via the eventchannel.
+
+### 2. Distribute Configuration Automatically
+Once saved, the manager will distribute the configuration to connected agents during:
+
+ - Agent restart
+
+ - Agent re-registration
+
+### 3. Force Sync with agent_control
+To manually push the updated configuration:
+
+**sudo /var/ossec/bin/agent_control -f <AGENT_NAME_OR_ID>**
+Replace <AGENT_NAME_OR_ID> with the agent’s name or ID.
+
+Use -f all to apply changes to all agents.
+
+### 4. Restart Agents on Endpoints
+If the configuration doesn’t apply automatically, restart the agent manually:
+
+**Windows:**
+
+Restart-Service -Name wazuh
+
+**Linux:**
+
+**sudo systemctl restart wazuh-agent**
+
+### 5. Confirm Logs Are Being Sent
+Check ossec.log on the manager.
+
+Use the Wazuh dashboard to verify incoming logs.
+
+Optionally, create a test log entry on the agent and confirm it appears in the manager’s logs.
+
+
+
+
+
+## Check Linux and Windows agent logging
+Here’s a step-by-step guide to check if logs are being sent from Wazuh agents **Linux and Windows** and received by the Wazuh manager:
+
+### **For Linux Devices with Wazuh Agent**
+### 1. **Verify Agent Configuration**:
+   - Open the `ossec.conf` file located at:
+     ```
+     /var/ossec/etc/ossec.conf
+     ```
+   - Ensure the `<localfile>` blocks are configured to monitor the desired log files. For example:
+     ```xml
+     <localfile>
+         <location>/var/log/syslog</location>
+         <log_format>syslog</log_format>
+     </localfile>
+     ```
+
+### 2. **Check Agent Logs**:
+   - Review the Wazuh agent logs to confirm that logs are being collected and forwarded:
+     ```
+     /var/ossec/logs/ossec.log
+     ```
+   - Look for entries indicating successful communication with the manager.
+
+### 3. **Test Log Transmission**:
+   - Generate a test event, such as creating a new file or triggering a system event, and check if it appears in the agent logs.
+
+### 4. **Restart the Agent**:
+   - Restart the Wazuh agent to apply the configuration:
+     ```bash
+     sudo systemctl restart wazuh-agent
+     ```
+
+### **For Windows Devices with Wazuh Agent**
+
+###1. **Verify Agent Configuration**:
+   - Open the `ossec.conf` file located at:
+     ```
+     C:\Program Files (x86)\ossec-agent\ossec.conf
+     ```
+   - Ensure the `<localfile>` blocks are correctly configured to monitor the desired log files or event channels. For example:
+     ```xml
+     <localfile>
+         <location>Microsoft-Windows-Security-Auditing</location>
+         <log_format>eventchannel</log_format>
+     </localfile>
+     ```
+
+### 2. **Check Agent Logs**:
+   - Review the Wazuh agent logs to confirm that logs are being collected and forwarded:
+     ```
+     C:\Program Files (x86)\ossec-agent\ossec.log
+     ```
+   - Look for entries indicating successful communication with the manager.
+
+### 3. **Test Log Transmission**:
+   - Generate a test event, such as creating a new file or triggering a security event, and check if it appears in the agent logs.
+
+### 4. **Restart the Agent**:
+   - Restart the Wazuh agent to ensure the configuration is applied:
+     ```powershell
+     Restart-Service -Name wazuh
+     ```
+
+## Check Wazuh manager working
+
+### 1. **Check Manager Logs**:
+   - Review the Wazuh manager logs to confirm that logs are being received from agents:
+     ```
+     /var/ossec/logs/ossec.log
+     ```
+   - Look for entries indicating logs received from the specific agent.
+
+### 2. **Use the Wazuh Dashboard**:
+   - Navigate to the Wazuh dashboard and check the **Agents** section to verify the connection status and events received from the agent.
+
+### 3. **Test with `agent_control`**:
+   - Use the `agent_control` utility to check the status of the agent:
+     ```bash
+     /var/ossec/bin/agent_control -i <AGENT_ID>
+     ```
+   - Replace `<AGENT_ID>` with the ID of the agent you want to check.
+
+### 4. **Inspect Alerts**:
+   - Check the alerts log to see if events from the agent are being processed:
+     ```
+     /var/ossec/logs/alerts/alerts.log
+     ```
+
+### 5. **Verify Archive Logs**:
+   - Ensure all logs (even those not triggering alerts) are stored in the archive logs:
+     ```
+     /var/ossec/logs/archives/archives.log
+     ```
+
+
+## Auditd Integration with Wazuh: Tracking System-Level Events
+In Wazuh, auditd is the Linux Audit daemon responsible for monitoring low-level system activity. It tracks system calls, file access, command execution, and permission changes. Wazuh integrates with auditd to collect, parse, and alert on these events—making it a powerful tool for security monitoring and compliance.
+
+### What auditd Does
+Monitors system calls: Tracks actions like execve, open, chmod, etc., to detect suspicious behavior.
+
+Captures user activity: Logs every command executed by users, including those with sudo or root privileges.
+
+Feeds Wazuh alerts: Wazuh parses auditd logs (typically from /var/log/audit/audit.log) and applies rules to generate alerts for:
+
+ - Privilege escalation
+ - Unauthorized access
+ - File tampering
+
+Supports custom rules: You can define your own audit.rules to monitor specific files, directories, or system calls. These can be tagged with keys like audit-wazuh-c for easier filtering and alerting.
+
+### How auditd and Wazuh Work Together
+auditd runs locally on each agent device and monitors system-level events.
+
+Wazuh agent parses auditd logs using decoders and rules.
+
+Wazuh manager receives alerts from agents and applies correlation logic to generate actionable insights.
+
+### Where Configuration Changes Are Made
+auditd rules are defined locally on each agent:
+
+Edit /etc/audit/rules.d/audit.rules or use auditctl to apply runtime rules.
+
+These rules determine what auditd tracks (e.g., execve, chmod, file access).
+
+Wazuh manager does not push auditd rules directly, unless you use centralized configuration via agent.conf.
+
+### Centralized auditd Rule via Wazuh Manager
+To push auditd rules from the manager:
+
+```xml
+<agent_config>
+  <audit>
+    <rules>
+      -a exit,always -F arch=b64 -F euid=0 -S execve -k audit-wazuh-c
+    </rules>
+  </audit>
+</agent_config>
+```
+Save this in /var/ossec/etc/shared/agent.conf on the manager.
+
+Agents will receive the config on restart or via:
+
+**sudo /var/ossec/bin/agent_control -f <AGENT_NAME_OR_ID>
+**Use -f all to apply changes to all agents.
+
+### Example: Track All Commands Run as Root
+To monitor every command executed by root users:
+
+**-a exit,always -F arch=b64 -F euid=0 -S execve -k audit-wazuh-c**
+
+### Explanation:
+-a exit,always: Log every exit of the specified syscall.
+
+-F arch=b64: Target 64-bit architecture (use b32 for 32-bit systems).
+
+-F euid=0: Filter for effective user ID 0 (root).
+
+-S execve: Monitor the execve syscall (used to execute binaries).
+
+-k audit-wazuh-c: Tag the rule with a key for easy identification in logs and Wazuh alerts.
+
+Why Multiple -F Flags Are Valid Each -F specifies a field filter. When you use more than one, auditd applies all of them together (logical AND).
+
+This rule helps Wazuh detect when sensitive tools like ncat, tcpdump, or netcat are executed unexpectedly by root users.
+
+
+
+## Making rules to detect applications run orsudo operation examples
+
+### 1. Create audit rules
+Append these lines to your audit rules file (e.g., /etc/audit/rules.d/audit.rules):
+bash
+# Monitor execution of tcpdump
+-a always,exit -F path=/usr/sbin/tcpdump -F perm=x -F auid>=1000 -F auid!=4294967295 -k exec_tcpdump
+# Monitor execution of netcat (nc)
+-a always,exit -F path=/usr/bin/nc -F perm=x -F auid>=1000 -F auid!=4294967295 -k exec_nc
+# Monitor usage of sudo
+-a always,exit -F path=/usr/bin/sudo -F perm=x -F auid>=1000 -F auid!=4294967295 -k exec_sudo
+> Adjust the paths (/usr/sbin/tcpdump, /usr/bin/nc, /usr/bin/sudo) if they differ on your system. Use which tcpdump etc. to confirm.
+
+### 2. Reload audit rules
+
+sudo augenrules --load
+sudo systemctl restart auditd
+
+### 3. Verify logging
+Run one of the monitored commands, then check the logs:
+
+sudo ausearch -k exec_tcpdump
+sudo ausearch -k exec_nc
+sudo ausearch -k exec_sudo
+This setup ensures Wazuh (via auditd) can alert you when these tools are executed—great for catching privilege escalation or lateral movement attempts.
+
+
+
+
+
+## Check syslog and Enable syslog collection on wazuh
+Troubleshooting Access to archives.log
+### 1. Check File Existence
+Run:
+ls -l /var/ossec/logs/archives/
+If archives.log isn’t listed, it may not be created yet—especially if <logall> isn’t enabled or no logs are being archived.
+### 2. Verify Permissions
+Try:
+- sudo ls -l /var/ossec/logs/archives/archives.log
+If the file exists but you still can’t read it, check ownership:
+- stat /var/ossec/logs/archives/archives.log
+
+You may need to run as root or ensure your user is in the ossec group.
+### 3. Enable Archiving
+In /var/ossec/etc/ossec.conf, confirm this block exists:
+```xml
+<global>
+  <logall>yes</logall>
+</global>
+```
+**Then restart the manager:**
+**sudo systemctl restart wazuh-manager**
+
+### 4. Check for Log Rotation
+Sometimes archives.log is rotated and renamed. Try:
+
+ - ls /var/ossec/logs/archives/archives.log*
+
+You might find archives.log.1, .gz, or other rotated versions.
+
+
+
+
+## Common Reasons pfSense Logs Don’t Reach Wazuh Manager
+### 1. Remote Logging Misconfiguration
+ -  Go to Status → System Logs → Settings → Remote Logging Options
+ -  Enable Remote Logging
+ -  Set Log Format to BSD
+ -  Add your Wazuh Manager’s IP and port (usually 514/UDP)
+ -  Check Everything to forward all logs
+### 2. Missing Hostname in Syslog Headers
+ -  pfSense often omits hostnames in syslog headers, which breaks Wazuh’s pre-decoder
+ -  **Workaround:** Use Syslog-ng on pfSense to reformat logs before sending to Wazuh
+### 3. Firewall Blocking Port 514
+ - On Wazuh Manager, ensure port 514/UDP is open:
+
+**sudo ufw allow 514/udp**
+
+### 4. No Decoder or Rule Match
+ - Wazuh needs the 0455-pfsense_decoders.xml and 0540-pfsense_rules.xml files
+ - You can override default rules to log drop events by removing <options>no_log</options>
+
+
+
+
+
+## Tcpdump test incoming traffic
+
+To capture ICMP packets from 192.168.0.254 using tcpdump, you can run:
+
+**sudo tcpdump -i eth0 icmp and src host 192.168.0.254**
+
+ - src host 192.168.0.254: Limits capture to packets originating from that IP.
+
+If you want to see both requests and replies involving that IP:
+
+**sudo tcpdump -i eth0 icmp and host 192.168.0.254**
+
+And for verbose output with packet details:
+
+**sudo tcpdump -vv -i eth0 icmp and host 192.168.0.254**
+
+To filter traffic by port 514 using tcpdump, you’ll want to specify the protocol and port in your capture expression. Port 514 is commonly used for syslog over UDP or TCP, depending on the setup.
+
+### How to send a basic packet for test purpose
+
+Send TCP packet 
+
+**echo "Test message to port 514" | nc 192.168.0.251 514**
+
+Send UDP packet 
+
+**echo "Test message" | nc -u -q1 192.168.0.251 514**
+
+###Examples for Capturing Port 514 Traffic
+
+### 1. UDP traffic on port 514
+
+**sudo tcpdump -i eth0 udp port 514**
+
+### 2. TCP traffic on port 514
+
+**sudo tcpdump -i eth0 tcp port 514**
+
+### 3. All traffic involving port 514 (TCP or UDP)
+sudo tcpdump -i eth0 port 514
+
+### To capture traffic from 192.168.0.254 on port 514:
+
+**sudo tcpdump -i eth0 src host 192.168.0.254 and port 514**
+
+Or to capture any traffic involving 192.168.0.254 and port 514:
+
+**sudo tcpdump -i eth0 host 192.168.0.254 and port 514**
+
+### Add Verbosity or Save to File
+
+ - Verbose output:
+ 
+	**sudo tcpdump -vv -i eth0 port 514**
+ 
+ - Show the packet contents a better option
+
+	**sudo tcpdump -nn -A -i <interface> udp port 514**
+ 
+ - Write to file for later analysis:
+   
+    **sudo tcpdump -i eth0 port 514 -w syslog_capture.pcap**
