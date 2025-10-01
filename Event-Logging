@@ -1,6 +1,20 @@
-## Force Log Gathering from Wazuh Manager to Agents
+# Event Logging
+ - 1. Force log gathering from manager to agents
+ - 2. Check Linux and Windows agent logging
+ - 3. Check Wazuh manager working
+ - 4. Auditd Tracking system-level events like file access
+ - 5. Making rules to detect applications run orsudo operation examples
+ - 6. Check syslog and Enable syslog collection on wazuh
+ - 7. Common Reasons pfSense Logs Don’t Reach Wazuh Manager
+ - 8. Tcpdump test incoming traffic
+
+
+## 1. Force Log Gathering from Wazuh Manager to Agents
 
 Wazuh manager can push configuration changes—including log collection directives—to agents using centralized management via agent.conf.
+
+
+
 
 ### 1. Centralized Configuration with agent.conf
 The agent.conf file defines settings that the manager distributes to agents. To request event logs from endpoints:
@@ -52,6 +66,7 @@ Restart-Service -Name wazuh
 **sudo systemctl restart wazuh-agent**
 
 ### 5. Confirm Logs Are Being Sent
+
 Check ossec.log on the manager.
 
 Use the Wazuh dashboard to verify incoming logs.
@@ -62,7 +77,7 @@ Optionally, create a test log entry on the agent and confirm it appears in the m
 
 
 
-## Check Linux and Windows agent logging
+## 2. Check Linux and Windows agent logging
 Here’s a step-by-step guide to check if logs are being sent from Wazuh agents **Linux and Windows** and received by the Wazuh manager:
 
 ### **For Linux Devices with Wazuh Agent**
@@ -97,7 +112,7 @@ Here’s a step-by-step guide to check if logs are being sent from Wazuh agents 
 
 ### **For Windows Devices with Wazuh Agent**
 
-###1. **Verify Agent Configuration**:
+### 1. **Verify Agent Configuration**:
    - Open the `ossec.conf` file located at:
      ```
      C:\Program Files (x86)\ossec-agent\ossec.conf
@@ -126,7 +141,10 @@ Here’s a step-by-step guide to check if logs are being sent from Wazuh agents 
      Restart-Service -Name wazuh
      ```
 
-## Check Wazuh manager working
+
+
+
+## 3. Check Wazuh manager working
 
 ### 1. **Check Manager Logs**:
    - Review the Wazuh manager logs to confirm that logs are being received from agents:
@@ -158,7 +176,9 @@ Here’s a step-by-step guide to check if logs are being sent from Wazuh agents 
      ```
 
 
-## Auditd Integration with Wazuh: Tracking System-Level Events
+
+
+## 4. Auditd Integration with Wazuh: Tracking System-Level Events
 In Wazuh, auditd is the Linux Audit daemon responsible for monitoring low-level system activity. It tracks system calls, file access, command execution, and permission changes. Wazuh integrates with auditd to collect, parse, and alert on these events—making it a powerful tool for security monitoring and compliance.
 
 ### What auditd Does
@@ -206,8 +226,8 @@ Save this in /var/ossec/etc/shared/agent.conf on the manager.
 
 Agents will receive the config on restart or via:
 
-**sudo /var/ossec/bin/agent_control -f <AGENT_NAME_OR_ID>
-**Use -f all to apply changes to all agents.
+**sudo /var/ossec/bin/agent_control -f <AGENT_NAME_OR_ID>**
+Use -f all to apply changes to all agents.
 
 ### Example: Track All Commands Run as Root
 To monitor every command executed by root users:
@@ -215,6 +235,7 @@ To monitor every command executed by root users:
 **-a exit,always -F arch=b64 -F euid=0 -S execve -k audit-wazuh-c**
 
 ### Explanation:
+
 -a exit,always: Log every exit of the specified syscall.
 
 -F arch=b64: Target 64-bit architecture (use b32 for 32-bit systems).
@@ -231,7 +252,8 @@ This rule helps Wazuh detect when sensitive tools like ncat, tcpdump, or netcat 
 
 
 
-## Making rules to detect applications run orsudo operation examples
+
+## 5. Making rules to detect applications run orsudo operation examples
 
 ### 1. Create audit rules
 Append these lines to your audit rules file (e.g., /etc/audit/rules.d/audit.rules):
@@ -261,7 +283,7 @@ This setup ensures Wazuh (via auditd) can alert you when these tools are execute
 
 
 
-## Check syslog and Enable syslog collection on wazuh
+## 6. Check syslog and Enable syslog collection on wazuh
 Troubleshooting Access to archives.log
 ### 1. Check File Existence
 Run:
@@ -294,7 +316,7 @@ You might find archives.log.1, .gz, or other rotated versions.
 
 
 
-## Common Reasons pfSense Logs Don’t Reach Wazuh Manager
+## 7. Common Reasons pfSense Logs Don’t Reach Wazuh Manager
 ### 1. Remote Logging Misconfiguration
  -  Go to Status → System Logs → Settings → Remote Logging Options
  -  Enable Remote Logging
@@ -317,7 +339,7 @@ You might find archives.log.1, .gz, or other rotated versions.
 
 
 
-## Tcpdump test incoming traffic
+## 8.  Tcpdump test incoming traffic
 
 To capture ICMP packets from 192.168.0.254 using tcpdump, you can run:
 
