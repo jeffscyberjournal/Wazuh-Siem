@@ -29,6 +29,8 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
   - Force log gathering from manager to agents
   - Check Linux and Windows agent logging
   - Check Wazuh manager working
+  - Auditd Tracking system-level events like file access
+  - Making rules to detect applications run orsudo operation examples
  	
 
 
@@ -1143,3 +1145,32 @@ To monitor every command executed by root users:
 Why Multiple -F Flags Are Valid Each -F specifies a field filter. When you use more than one, auditd applies all of them together (logical AND).
 
 This rule helps Wazuh detect when sensitive tools like ncat, tcpdump, or netcat are executed unexpectedly by root users.
+
+
+
+## Making rules to detect applications run orsudo operation examples
+
+### 1. Create audit rules
+Append these lines to your audit rules file (e.g., /etc/audit/rules.d/audit.rules):
+bash
+# Monitor execution of tcpdump
+-a always,exit -F path=/usr/sbin/tcpdump -F perm=x -F auid>=1000 -F auid!=4294967295 -k exec_tcpdump
+# Monitor execution of netcat (nc)
+-a always,exit -F path=/usr/bin/nc -F perm=x -F auid>=1000 -F auid!=4294967295 -k exec_nc
+# Monitor usage of sudo
+-a always,exit -F path=/usr/bin/sudo -F perm=x -F auid>=1000 -F auid!=4294967295 -k exec_sudo
+> Adjust the paths (/usr/sbin/tcpdump, /usr/bin/nc, /usr/bin/sudo) if they differ on your system. Use which tcpdump etc. to confirm.
+
+### 2. Reload audit rules
+
+sudo augenrules --load
+sudo systemctl restart auditd
+
+### 3. Verify logging
+Run one of the monitored commands, then check the logs:
+
+sudo ausearch -k exec_tcpdump
+sudo ausearch -k exec_nc
+sudo ausearch -k exec_sudo
+This setup ensures Wazuh (via auditd) can alert you when these tools are executed—great for catching privilege escalation or lateral movement attempts.
+
