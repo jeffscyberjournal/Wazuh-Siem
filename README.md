@@ -1274,9 +1274,15 @@ Or to capture any traffic involving 192.168.0.254 and port 514:
 **sudo tcpdump -i eth0 host 192.168.0.254 and port 514**
 
 ### Add Verbosity or Save to File
+
  - Verbose output:
-    **sudo tcpdump -vv -i eth0 port 514**
+ 
+	**sudo tcpdump -vv -i eth0 port 514**
+ 
  - Show the packet contents a better option
+
 	**sudo tcpdump -nn -A -i <interface> udp port 514**
+ 
  - Write to file for later analysis:
+   
     **sudo tcpdump -i eth0 port 514 -w syslog_capture.pcap**
