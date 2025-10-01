@@ -695,21 +695,7 @@ If your kernel is newer than the CVE’s affected version, it's likely a false p
 A similar issue was reported for CVE-2024-38541 on Ubuntu 22.04 with HWE kernel. The kernel was patched, but Wazuh still flagged it due to version mismatch.
 
 
-## Auditd Tracking system-level events like file access
 
-In Wazuh, auditd is the Linux Audit daemon that tracks system-level events like file access, command execution, and permission changes. Wazuh integrates with auditd to collect and analyze these events for security monitoring and compliance.
-
-Here’s what it does in a nutshell:
-
-	• Monitors system calls: Tracks actions like execve, open, chmod, etc., which are crucial for detecting suspicious behavior.
-	• Captures user activity: You can log every command a user runs, including those with sudo or root privileges.
-	• Feeds Wazuh alerts: Wazuh parses auditd logs (typically from /var/log/audit/audit.log) and applies rules to generate alerts for things like privilege escalation, unauthorized access, or tampering.
-	• Supports custom rules: You can define your own audit.rules to monitor specific files, directories, or system calls, and tag them with keys like audit-wazuh-c for command execution.
-
-For example, to track all commands run as root, you might add (bash)
-
--a exit,always -F arch=b64 -F euid=0 -S execve -k audit-wazuh-c
-Then Wazuh can alert when something sketchy like ncat or tcpdump is executed unexpectedly.
 
 
 ## Tcpdump test incoming traffic
@@ -1174,3 +1160,37 @@ sudo ausearch -k exec_nc
 sudo ausearch -k exec_sudo
 This setup ensures Wazuh (via auditd) can alert you when these tools are executed—great for catching privilege escalation or lateral movement attempts.
 
+
+
+
+
+## Check syslog and Enable syslog collection on wazuh
+Troubleshooting Access to archives.log
+### 1. Check File Existence
+Run:
+ls -l /var/ossec/logs/archives/
+If archives.log isn’t listed, it may not be created yet—especially if <logall> isn’t enabled or no logs are being archived.
+### 2. Verify Permissions
+Try:
+- sudo ls -l /var/ossec/logs/archives/archives.log
+If the file exists but you still can’t read it, check ownership:
+- stat /var/ossec/logs/archives/archives.log
+
+You may need to run as root or ensure your user is in the ossec group.
+### 3. Enable Archiving
+In /var/ossec/etc/ossec.conf, confirm this block exists:
+```xml
+<global>
+  <logall>yes</logall>
+</global>
+```
+**Then restart the manager:
+**
+**sudo systemctl restart wazuh-manager**
+
+### 4. Check for Log Rotation
+Sometimes archives.log is rotated and renamed. Try:
+
+ - ls /var/ossec/logs/archives/archives.log*
+
+You might find archives.log.1, .gz, or other rotated versions.
