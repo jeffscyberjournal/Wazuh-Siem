@@ -6,12 +6,12 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
 
 ## Sections learned about wazuh
 - [Installation Of Agents](Installation-of-agents/README.md)
-  - Install and update using OVA <!--29-->
-  - Installing agents <!--85-->
-    - Ubuntu linux (DEBIAN) installation 
-      - Remove agents Ubuntu
-    - Windows installation
-      - Remove agent Windows
+  - 2.1 Install and update using OVA <!--29-->
+  - 2.2 Installing agents <!--85-->
+    - 2.2.1 Ubuntu linux (DEBIAN) installation 
+    - 2.2.2 Remove agents Ubuntu
+    - 2.2.3 Windows installation
+    - 2.2.4 Remove agent Windows
 - [Wazuh Manager Connectivity](Wazuh-Manager-Connectivity/README.md) 
   - Change IP agent point toward manager <!--243-->
   - Wazuh dashboard server is not responding to changes  <!--266-->
