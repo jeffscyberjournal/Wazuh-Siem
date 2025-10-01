@@ -25,7 +25,6 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
   - Auditd Tracking system-level events like file access
   - Common Reasons pfSense Logs Don’t Reach Wazuh Manager
   - Check syslog and Enable syslog collection on wazuh  
-
 - [Event Logging Guide](Event-Logging/README.md)
   - 2.1 Change IP agent point toward manager <!--243-->
   - 2.2 Wazuh dashboard server is not responding to changes  <!--266-->
