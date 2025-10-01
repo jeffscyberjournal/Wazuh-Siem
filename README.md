@@ -256,12 +256,20 @@ For more details, check out [this guide](https://documentation.wazuh.com/current
 
 ## Change IP agent point toward manger
 
-Switching the agent's manager target from 192.168.0.134 to 192.168.0.174. Here's the cleanest way to do it on Ubuntu:
+Switching the agent's manager target from 192.168.0.X to 192.168.0.Y. Here's the cleanest way to do it on Ubuntu:
 
 ### 1. Edit the agent config file (bash):
 
-<img width="270" height="183" alt="image" src="https://github.com/user-attachments/assets/0cbd88e5-73b6-44b2-917e-296ebfb0b002" />
+```
+sudo nano /var/ossec/etc/ossec.conf
 
+Inside the <server> block, change:
+xml
+<address>192.168.0.X</address>
+
+to:
+xml
+<address>192.168.0.Y</address>```
 
 ### 2. (Optional but recommended): If you're using agent-auth and want to ensure proper re-registration (bash):
 
