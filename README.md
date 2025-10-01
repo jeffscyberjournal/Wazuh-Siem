@@ -32,6 +32,9 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
   - Auditd Tracking system-level events like file access
   - Making rules to detect applications run orsudo operation examples
   - Check syslog and Enable syslog collection on wazuh
+  - Common Reasons pfSense Logs Don’t Reach Wazuh Manager
+  - Tcpdump test incoming traffic
+
  	
 
 
@@ -1194,3 +1197,86 @@ Sometimes archives.log is rotated and renamed. Try:
  - ls /var/ossec/logs/archives/archives.log*
 
 You might find archives.log.1, .gz, or other rotated versions.
+
+
+
+
+## Common Reasons pfSense Logs Don’t Reach Wazuh Manager
+### 1. Remote Logging Misconfiguration
+ -  Go to Status → System Logs → Settings → Remote Logging Options
+ -  Enable Remote Logging
+ -  Set Log Format to BSD
+ -  Add your Wazuh Manager’s IP and port (usually 514/UDP)
+ -  Check Everything to forward all logs
+### 2. Missing Hostname in Syslog Headers
+ -  pfSense often omits hostnames in syslog headers, which breaks Wazuh’s pre-decoder
+ -  **Workaround:** Use Syslog-ng on pfSense to reformat logs before sending to Wazuh
+### 3. Firewall Blocking Port 514
+ - On Wazuh Manager, ensure port 514/UDP is open:
+
+**sudo ufw allow 514/udp**
+
+### 4. No Decoder or Rule Match
+ - Wazuh needs the 0455-pfsense_decoders.xml and 0540-pfsense_rules.xml files
+ - You can override default rules to log drop events by removing <options>no_log</options>
+
+
+
+
+
+## Tcpdump test incoming traffic
+
+To capture ICMP packets from 192.168.0.254 using tcpdump, you can run:
+
+**sudo tcpdump -i eth0 icmp and src host 192.168.0.254**
+
+ - src host 192.168.0.254: Limits capture to packets originating from that IP.
+
+If you want to see both requests and replies involving that IP:
+
+**sudo tcpdump -i eth0 icmp and host 192.168.0.254**
+
+And for verbose output with packet details:
+
+**sudo tcpdump -vv -i eth0 icmp and host 192.168.0.254**
+
+To filter traffic by port 514 using tcpdump, you’ll want to specify the protocol and port in your capture expression. Port 514 is commonly used for syslog over UDP or TCP, depending on the setup.
+
+### How to send a basic packet for test purpose
+
+Send TCP packet 
+
+**echo "Test message to port 514" | nc 192.168.0.251 514**
+
+Send UDP packet 
+
+**echo "Test message" | nc -u -q1 192.168.0.251 514**
+
+###Examples for Capturing Port 514 Traffic
+
+### 1. UDP traffic on port 514
+
+**sudo tcpdump -i eth0 udp port 514**
+
+### 2. TCP traffic on port 514
+
+**sudo tcpdump -i eth0 tcp port 514**
+
+### 3. All traffic involving port 514 (TCP or UDP)
+sudo tcpdump -i eth0 port 514
+
+### To capture traffic from 192.168.0.254 on port 514:
+
+**sudo tcpdump -i eth0 src host 192.168.0.254 and port 514**
+
+Or to capture any traffic involving 192.168.0.254 and port 514:
+
+**sudo tcpdump -i eth0 host 192.168.0.254 and port 514**
+
+### Add Verbosity or Save to File
+ - Verbose output:
+    **sudo tcpdump -vv -i eth0 port 514**
+ - Show the packet contents a better option
+	**sudo tcpdump -nn -A -i <interface> udp port 514**
+ - Write to file for later analysis:
+    **sudo tcpdump -i eth0 port 514 -w syslog_capture.pcap**
