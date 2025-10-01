@@ -6,6 +6,7 @@
   - 2.5 Ensure IP is static for wazuh  <!-400-->
   - 2.6 Set static Ip and Confirm DHCP is Off and Static IP is Set  <!--460--> 
   - 2.7 When nmcli isn’t Available or Used
+  - 2.8 Tcpdump test incoming traffic
 
 
 
@@ -339,3 +340,60 @@ Setting up a **static IP address** on Ubuntu ensures your system always has the 
    sudo netplan apply
 
    This will apply the new network settings.
+
+
+
+
+## 2.8 Tcpdump test incoming traffic
+
+To capture ICMP packets from 192.168.0.254 using tcpdump, you can run:
+
+sudo tcpdump -i eth0 icmp and src host 192.168.0.254
+ - src host 192.168.0.254: Limits capture to packets originating from that IP.
+
+If you want to see both requests and replies involving that IP:
+
+sudo tcpdump -i eth0 icmp and host 192.168.0.254
+
+And for verbose output with packet details:
+
+sudo tcpdump -vv -i eth0 icmp and host 192.168.0.254
+
+
+To filter traffic by port 514 using tcpdump, you’ll want to specify the protocol and port in your capture expression. Port 514 is commonly used for syslog over UDP or TCP, depending on the setup.
+
+How to send a basic packet for test purpose
+Send TCP packet
+echo "Test message to port 514" | nc 192.168.0.x 514
+Send UDP packet 
+echo "Test message" | nc -u -q1 192.168.0.x 514
+
+### Examples for Capturing Port 514 Traffic
+
+#### 1. UDP traffic on port 514
+
+sudo tcpdump -i eth0 udp port 514
+
+#### 2. TCP traffic on port 514
+
+sudo tcpdump -i eth0 tcp port 514
+
+#### 3. All traffic involving port 514 (TCP or UDP)
+
+sudo tcpdump -i eth0 port 514
+To capture traffic from 192.168.0.x on port 514:
+
+sudo tcpdump -i eth0 src host 192.168.0.x and port 514
+Or to capture any traffic involving 192.168.0.x and port 514:
+
+sudo tcpdump -i eth0 host 192.168.0.x and port 514
+
+#### Add Verbosity or Save to File
+ - Verbose output (bash):
+	
+sudo tcpdump -vv -i eth0 port 514
+ - Show the packet contents a better option
+	sudo tcpdump -nn -A -i <interface> udp port 514
+ - Write to file for later analysis (bash):
+
+sudo tcpdump -i eth0 port 514 -w syslog_capture.pcap
