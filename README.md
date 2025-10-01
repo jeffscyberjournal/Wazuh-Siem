@@ -1073,3 +1073,41 @@ Here’s a step-by-step guide to check if logs are being sent from Wazuh agents 
      ```
 
 
+## Auditd: Tracking System-Level Events Like File Access
+In Wazuh, auditd is the Linux Audit daemon responsible for monitoring low-level system activity. Wazuh integrates with auditd to collect, parse, and alert on these events—making it a powerful tool for security monitoring and compliance.
+
+### What auditd Does
+Monitors system calls: Tracks critical actions like execve, open, chmod, etc., which help detect suspicious behavior.
+
+Captures user activity: Logs every command executed by users, including those with sudo or root privileges.
+
+Feeds Wazuh alerts: Wazuh parses auditd logs (usually from /var/log/audit/audit.log) and applies rules to generate alerts for:
+
+ - Privilege escalation
+ - Unauthorized access
+ - File tampering
+
+Supports custom rules: You can define your own audit.rules to monitor specific files, directories, or system calls. These can be tagged with custom keys (e.g., audit-wazuh-c) for easier filtering and alerting.
+
+## Example: Track All Commands Run as Root
+To monitor every command executed by root users:
+
+
+-a exit,always -F arch=b64 -F euid=0 -S execve -k audit-wazuh-c
+
+## Explanation:
+-a exit,always: Log every exit of the specified syscall.
+
+-S execve: Monitor the execve syscall (used to execute binaries).
+
+-k audit-wazuh-c: Tag the rule with a key for easy identification in logs and Wazuh alerts.
+
+-F arch=b64: Target 64-bit architecture (use b32 for 32-bit systems).
+
+-F euid=0: Filter for effective user ID 0 (root).
+
+**Why Multiple -F Flags Are Valid**
+Each -F specifies a field filter. When you use more than one, auditd applies all of them together (logical AND).
+
+
+This rule helps Wazuh detect when sensitive tools like ncat, tcpdump, or netcat are executed unexpectedly by root users.
