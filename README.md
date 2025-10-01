@@ -21,12 +21,11 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
   - Set static Ip and Confirm DHCP is Off and Static IP is Set  <!--460--> 
   - When nmcli isn’t Available or Used
 - [Setup agents and manager for vulnerability scanning](Setup-agents-and-manager-for-vulnerability-scanning/README.md) 
-- Setup agents and manager for vulnerability scanning  <!--569-->
   - Wazuh’s vulnerability detection module reporting outdated CVEs
   - Auditd Tracking system-level events like file access
   - Tcpdump test incoming traffic
   - Common Reasons pfSense Logs Don’t Reach Wazuh Manager
-  - Check syslog and Enable syslog collection on wazuh - 
+  - Check syslog and Enable syslog collection on wazuh  
 - Configure alerting based on alert level to email
 - [Event Logging Guide](Event-Logging/README.md)
   - Force log gathering from manager to agents
