@@ -5,27 +5,36 @@
 The goal of this project was to gain hands-on experience with SIEM by deploying Wazuh using its official OVA package. This involved exploring its core capabilities, understanding log ingestion and analysis workflows, and ultimately integrating Wazuh with my home lab environment—including a pfSense firewall—for real-time telemetry and threat detection.
 
 ## Sections learned about wazuh
-- Install and update using OVA
-- Installing agents Covering 
-  - Ubuntu linux (DEBIAN) installation
+- Install and update using OVA <!--29-->
+- Installing agents <!--85-->
+  - Ubuntu linux (DEBIAN) installation 
     - Remove agents Ubuntu
   - Windows installation
     - Remove agent Windows
-- Change IP agent point toward manger
-- Set static Ip and Confirm DHCP is Off and Static IP is Set
+- Change IP agent point toward manager <!--243-->
+  - Wazuh dashboard server is not responding to changes  <!--266-->
+  - Check Agent Connection from Manage <!--273-->
+  - Secure Syslog Configuration for pfSense → Wazuh Manager <!--356-->
+  - Ensure IP is static for wazuh  <!-400-->
+- Set static Ip and Confirm DHCP is Off and Static IP is Set  <!--460--> 
   - When nmcli isn’t Available or Used
-- Setup agents and manager for vulnerability scanning
+- Setup agents and manager for vulnerability scanning  <!--569-->
   - Wazuh’s vulnerability detection module reporting outdated CVEs
   - Auditd Tracking system-level events like file access
   - Tcpdump test incoming traffic
   - Common Reasons pfSense Logs Don’t Reach Wazuh Manager
-  - Check syslog and Enable syslog collection on wazuh
+  - Check syslog and Enable syslog collection on wazuh - 
+- Configure alerting based on alert level to email
+- Event logging
+  - Force log gathering from manager to agents
+  - Check Linux and Windows agent logging
+  - Check Wazuh manager working
+ 	
 
 
 
 
-
-## Installation 
+## Install and update using OVA
 So far I tried installation on proxmox and virtualbox installations:
 
 ### For VirtualBox 
@@ -261,6 +270,198 @@ Confirm the agent shows up on the manager (Y): On the manager (bash):
 /var/ossec/bin/agent_control -l
 
 
+## Wazuh dashboard server is not responding to changes
+Stopping all the services and restarting for refreshing wazuh-manager
+```
+sudo systemctl start wazuh-indexer ; systemctl start wazuh-manager ; systemctl start wazuh-dashboard
+```
+
+
+## Check Agent Connection from Manager
+### 1. Use the Wazuh manager to verify agent status:
+
+bash
+sudo /var/ossec/bin/manage_agents
+Press L to list agents.
+
+You’ll see each agent’s name, IP, and assigned ID.
+
+You can also add, remove, or extract keys from this interface.
+
+To check a specific agent’s status:
+
+bash
+sudo /var/ossec/bin/agent_control -i 002 | grep Status
+-i specifies the agent ID (e.g., 002).
+
+This filters the output to show only the status line.
+
+### 2. Verify Network Connection (Windows Agent)
+
+netstat -ano | findstr :1514
+
+**Example output:**
+
+TCP    192.168.0.180:63929    192.168.0.173:1514     ESTABLISHED     16500
+
+**Test connectivity to manager:**
+
+Test-NetConnection -ComputerName 192.168.0.173 -Port 1514
+
+**Expected result:**
+
+TcpTestSucceeded : True
+
+### 3. Check Agent Logs (Windows)
+
+notepad "C:\Program Files (x86)\ossec-agent\ossec.log"
+If you see these errors, the agent won’t communicate with the manager:
+
+Code
+ERROR: (4112): Invalid server address found: '0.0.0.0'
+ERROR: (1215): No client configured. Exiting.
+
+### 4. Validate Agent Configuration
+
+**Windows Agent**
+
+notepad "C:\Program Files (x86)\ossec-agent\ossec.conf"
+
+**Linux Agent**
+
+sudo nano /var/ossec/etc/ossec.conf
+
+``` xml
+<ossec_config>
+  <client>
+    <server>
+      <address>192.168.0.174</address>
+      <port>1514</port>
+      <protocol>tcp</protocol>
+    </server>
+    <crypto_method>aes</crypto_method>
+    <notify_time>10</notify_time>
+    <time-reconnect>60</time-reconnect>
+    <auto_restart>yes</auto_restart>
+  </client>
+</ossec_config>
+```
+
+### Restart the agent:
+
+**Windows:**
+
+net start wazuh
+
+**Linux:**
+
+sudo systemctl restart wazuh-agent
+
+
+
+## Secure Syslog Configuration for pfSense → Wazuh Manager
+
+⚠️ Why <connection>secure</connection> Won’t Work for pfSense
+If your Wazuh manager is configured with:
+```xml
+<connection>secure</connection>
+```
+…it expects encrypted communication from Wazuh agents only. This uses the Wazuh agent protocol (TLS + authentication), and does not accept raw syslog messages. That means:
+ - pfSense logs sent via syslog will be ignored.
+ - You’ll see no alerts or log entries from pfSense.
+### Correct Setup for pfSense Syslog Forwarding
+To accept logs from pfSense, your Wazuh manager must be configured to receive syslog traffic, not agent traffic.
+Edit /var/ossec/etc/ossec.conf and ensure the <remote> block looks like this:
+```xml
+<remote>
+  <connection>syslog</connection>
+  <port>1514</port>
+  <protocol>udp</protocol>  <!-- Or TCP, depending on pfSense -->
+</remote>
+```
+
+### Explanation:
+ - `<connection>syslog</connection>` tells Wazuh to accept raw syslog messages.
+ - `<port>1514</port>` is the listening port (pfSense default is 514, but Wazuh often uses 1514).
+ - `<protocol>udp</protocol>` matches pfSense’s default syslog method. Use tcp only if you’ve configured pfSense to send logs via TCP.
+### Testing pfSense Log Delivery
+From pfSense, you can send a test log using nc (Netcat):
+
+`**echo "<13>Test log from pfSense to Wazuh" | nc -u -w1 192.168.0.x 1514**`
+
+ - **<13>** is the syslog priority (USER facility, NOTICE severity).
+ - **nc -u**: Sends via UDP.
+ - **-w1**: Waits 1 second before timeout.
+ - **192.168.0.x**: Replace with your Wazuh manager’s IP.
+On the Wazuh manager, confirm receipt:
+
+**sudo tcpdump -i any port 1514 -n**
+
+Look for your test message in the packet capture.
+
+
+
+
+
+## Ensure IP is static for wazuh
+
+To avoid DHCP changes and ensure consistent connectivity, configure a static IP based on your OVA’s base OS.
+
+### Identify Your Base OS
+Run either of the following to determine if your OVA is Ubuntu, CentOS, or Debian:
+
+**cat /etc/os-release
+**
+Or:
+
+**uname -a**
+
+### Ubuntu-Based OVA (Without Netplan)
+If netplan is not available and you're sure it's Ubuntu, the system may use systemd-networkd.
+
+### Locate the interface file:
+
+**ls /etc/systemd/network/**
+If a config file exists (e.g., eth0.network), edit it:
+
+```ini
+[Match]
+Name=eth0
+
+[Network]
+DHCP=no
+Address=192.168.1.100/24
+Gateway=192.168.1.1
+DNS=8.8.8.8
+```
+2. Reload networking:
+
+**sudo systemctl restart systemd-networkd
+**
+### CentOS-Based OVA
+1. Locate the interface config file:
+
+**ls /etc/sysconfig/network-scripts/ifcfg-***
+
+2. Open your interface file (e.g., ifcfg-eth0):
+
+**sudo nano /etc/sysconfig/network-scripts/ifcfg-eth0**
+3. Update the contents:
+
+```ini
+BOOTPROTO=static
+ONBOOT=yes
+IPADDR=192.168.1.100
+NETMASK=255.255.255.0
+GATEWAY=192.168.1.1
+DNS1=8.8.8.8
+```
+4. Restart networking:
+
+**sudo systemctl restart network**
+
+
+
 
 
 ## Set static Ip and Confirm DHCP is Off and Static IP is Set
@@ -275,7 +476,7 @@ Look for files like 10-eth0.network, 20-static.network, etc.
 cat /etc/systemd/network/*.network
 You're looking for something like:
 
-ini
+```ini
 [Match]
 Name=eth0
 [Network]
@@ -283,8 +484,9 @@ DHCP=no
 Address=192.168.x.x/24
 Gateway=192.168.x.x
 DNS=8.8.8.8
-	• DHCP=no confirms DHCP is disabled.
-	• Address= confirms static IP is set.
+```
+ - DHCP=no confirms DHCP is disabled.
+ - Address= confirms static IP is set.
 
 ### 3. Check Runtime Status (bash)
 
@@ -296,22 +498,22 @@ This shows whether the interface is using static or dynamic addressing.
 ip a s eth0
 You should see:
 
-inet 192.168.x.x/24 scope global eth0
+**inet 192.168.x.x/24 scope global eth0**
 If it says dynamic, DHCP is still active. If it says valid_lft forever, it’s static.
 
 ### 5. Confirm Gateway and DNS (bash)
 
-ip r
-cat /etc/resolv.conf
+**ip r
+cat /etc/resolv.conf**
 
 ## When nmcli isn’t Available or Used
 
-	• On minimal server installations, NetworkManager (and therefore nmcli) may not be installed by default.
-	• Cloud/OVA appliances (like Wazuh OVA) often rely on lighter or more predictable methods like:
-		○ netplan (Ubuntu Server)
-		○ systemd-networkd
-		○ network-scripts (CentOS/older RHEL)
-		○ Manual ip or ifconfig commands for custom scripts
+ - On minimal server installations, NetworkManager (and therefore nmcli) may not be installed by default.
+ - Cloud/OVA appliances (like Wazuh OVA) often rely on lighter or more predictable methods like:
+   - netplan (Ubuntu Server)
+   - ystemd-networkd
+   - network-scripts (CentOS/older RHEL)
+   - Manual ip or ifconfig commands for custom scripts
 
 When it is option:
 
@@ -436,6 +638,10 @@ As for hotfixes, adding <hotfixes>yes</hotfixes> is recommended if you want the 
 #### 2. Check Vulnerability Detection Alerts:
    - From the dashboard, navigate to the **Vulnerability Detection** section.
    - Review alerts for identified vulnerabilities on the agent's device.
+
+
+
+
 
 
 ## Wazuh’s vulnerability detection module reporting outdated CVEs
@@ -622,11 +828,12 @@ You might find archives.log.1, .gz, or other rotated versions.
 logger -n 192.168.0.x -P 514 -d "Test log from pfSense to Wazuh"
 
 ### Breakdown of the Command
-	• logger: Built-in utility to send syslog messages.
-	• -n 192.168.0.x: Target IP address (your Wazuh server).
-	• -P 514: Destination port (default for syslog over UDP).
-	• -d: Use UDP (datagram) instead of TCP.
-	• "Test log from pfSense to Wazuh": The actual message.
+
+ - logger: Built-in utility to send syslog messages.
+ - -n 192.168.0.x: Target IP address (your Wazuh server).
+ - -P 514: Destination port (default for syslog over UDP).
+ - -d: Use UDP (datagram) instead of TCP.
+ - "Test log from pfSense to Wazuh": The actual message.
 
 #### This sends a single syslog-formatted message directly to Wazuh. You can verify receipt on the Wazuh server using (bash):
 
@@ -645,10 +852,10 @@ Here’s the correct way to push a single log entry from pfSense to your Wazuh s
 	• echo "<13>Test log from pfSense to Wazuh" | nc -u -w1 192.168.0.x 514
 
 ### Explanation
-	• <13> is the syslog priority value (facility=USER, severity=NOTICE).
-	• nc -u: Sends via UDP
-	• -w1: Waits 1 second before timing out
-	• 192.168.0.x 514: Target Wazuh IP and port
+ - **<13>** is the syslog priority value (facility=USER, severity=NOTICE).
+ - **nc -u**: Sends via UDP
+ - **-w1**: Waits 1 second before timing out
+ - **192.168.0.x 514**: Target Wazuh IP and port
 
 This bypasses the logger utility and sends a properly formatted syslog message directly to Wazuh.
 
@@ -659,4 +866,210 @@ This bypasses the logger utility and sends a properly formatted syslog message d
 sudo tcpdump -i any port 514 -n
 
 Look for your "Test log from pfSense to Wazuh" entry.
+
+
+## Configure alerting based on alert level to email
+
+
+To send email alerts to `myemail@emailprovider.com` for alerts above a certain severity level, follow these steps:
+
+---
+
+### Step 1: Enable Email Notifications
+
+Edit `/var/ossec/etc/ossec.conf` and modify the `<global>` block:
+
+```xml
+<global>
+  <email_notification>yes</email_notification>
+  <smtp_server>localhost</smtp_server> <!-- Or your SMTP relay -->
+  <email_from>wazuh@yourdomain.com</email_from>
+  <email_to>myemail@emailprovider.com</email_to>
+  <email_maxperhour>100</email_maxperhour>
+</global>
+```
+Replace localhost with your SMTP server if you're not using a local relay like Postfix.
+
+email_from must match the sender address configured in your SMTP relay.
+
+Step 2: Set Alert Threshold
+Still in ossec.conf, configure the <alerts> block:
+
+```xml
+<alerts>
+  <email_alert_level>10</email_alert_level>
+</alerts>
+This means only alerts with level 10 or higher will trigger an email.
+```
+
+You can adjust the level from 1 (low) to 16 (critical), depending on your noise tolerance.
+
+### Step 3: Restart the Wazuh Manager
+Apply the changes (bash):
+
+sudo systemctl restart wazuh-manager
+
+
+
+
+
+## Force Log Gathering from Wazuh Manager to Agents
+
+Wazuh manager can push configuration changes—including log collection directives—to agents using centralized management via agent.conf.
+
+### 1. Centralized Configuration with agent.conf
+The agent.conf file defines settings that the manager distributes to agents. To request event logs from endpoints:
+
+Open the configuration file:
+
+**sudo nano /var/ossec/etc/shared/agent.conf**
+
+### Add log collection directives:
+```xml
+<localfile>
+  <location>/var/log/syslog</location>
+  <log_format>syslog</log_format>
+</localfile>
+
+<localfile>
+  <location>C:\Windows\System32\winevt\Logs\Security.evtx</location>
+  <log_format>eventchannel</log_format>
+</localfile>
+```
+The first block collects Linux syslog entries.
+
+The second block collects Windows Security event logs via the eventchannel.
+
+### 2. Distribute Configuration Automatically
+Once saved, the manager will distribute the configuration to connected agents during:
+
+ - Agent restart
+
+ - Agent re-registration
+
+### 3. Force Sync with agent_control
+To manually push the updated configuration:
+
+**sudo /var/ossec/bin/agent_control -f <AGENT_NAME_OR_ID>**
+Replace <AGENT_NAME_OR_ID> with the agent’s name or ID.
+
+Use -f all to apply changes to all agents.
+
+### 4. Restart Agents on Endpoints
+If the configuration doesn’t apply automatically, restart the agent manually:
+
+**Windows:**
+
+Restart-Service -Name wazuh
+
+**Linux:**
+
+**sudo systemctl restart wazuh-agent**
+
+### 5. Confirm Logs Are Being Sent
+Check ossec.log on the manager.
+
+Use the Wazuh dashboard to verify incoming logs.
+
+Optionally, create a test log entry on the agent and confirm it appears in the manager’s logs.
+
+
+
+
+
+## Check Linux and Windows agent logging
+Here’s a step-by-step guide to check if logs are being sent from Wazuh agents **Linux and Windows** and received by the Wazuh manager:
+
+### **For Linux Devices with Wazuh Agent**
+### 1. **Verify Agent Configuration**:
+   - Open the `ossec.conf` file located at:
+     ```
+     /var/ossec/etc/ossec.conf
+     ```
+   - Ensure the `<localfile>` blocks are configured to monitor the desired log files. For example:
+     ```xml
+     <localfile>
+         <location>/var/log/syslog</location>
+         <log_format>syslog</log_format>
+     </localfile>
+     ```
+
+### 2. **Check Agent Logs**:
+   - Review the Wazuh agent logs to confirm that logs are being collected and forwarded:
+     ```
+     /var/ossec/logs/ossec.log
+     ```
+   - Look for entries indicating successful communication with the manager.
+
+### 3. **Test Log Transmission**:
+   - Generate a test event, such as creating a new file or triggering a system event, and check if it appears in the agent logs.
+
+### 4. **Restart the Agent**:
+   - Restart the Wazuh agent to apply the configuration:
+     ```bash
+     sudo systemctl restart wazuh-agent
+     ```
+
+### **For Windows Devices with Wazuh Agent**
+
+###1. **Verify Agent Configuration**:
+   - Open the `ossec.conf` file located at:
+     ```
+     C:\Program Files (x86)\ossec-agent\ossec.conf
+     ```
+   - Ensure the `<localfile>` blocks are correctly configured to monitor the desired log files or event channels. For example:
+     ```xml
+     <localfile>
+         <location>Microsoft-Windows-Security-Auditing</location>
+         <log_format>eventchannel</log_format>
+     </localfile>
+     ```
+
+### 2. **Check Agent Logs**:
+   - Review the Wazuh agent logs to confirm that logs are being collected and forwarded:
+     ```
+     C:\Program Files (x86)\ossec-agent\ossec.log
+     ```
+   - Look for entries indicating successful communication with the manager.
+
+### 3. **Test Log Transmission**:
+   - Generate a test event, such as creating a new file or triggering a security event, and check if it appears in the agent logs.
+
+### 4. **Restart the Agent**:
+   - Restart the Wazuh agent to ensure the configuration is applied:
+     ```powershell
+     Restart-Service -Name wazuh
+     ```
+
+## Check Wazuh manager working
+
+### 1. **Check Manager Logs**:
+   - Review the Wazuh manager logs to confirm that logs are being received from agents:
+     ```
+     /var/ossec/logs/ossec.log
+     ```
+   - Look for entries indicating logs received from the specific agent.
+
+### 2. **Use the Wazuh Dashboard**:
+   - Navigate to the Wazuh dashboard and check the **Agents** section to verify the connection status and events received from the agent.
+
+### 3. **Test with `agent_control`**:
+   - Use the `agent_control` utility to check the status of the agent:
+     ```bash
+     /var/ossec/bin/agent_control -i <AGENT_ID>
+     ```
+   - Replace `<AGENT_ID>` with the ID of the agent you want to check.
+
+### 4. **Inspect Alerts**:
+   - Check the alerts log to see if events from the agent are being processed:
+     ```
+     /var/ossec/logs/alerts/alerts.log
+     ```
+
+### 5. **Verify Archive Logs**:
+   - Ensure all logs (even those not triggering alerts) are stored in the archive logs:
+     ```
+     /var/ossec/logs/archives/archives.log
+     ```
+
 
