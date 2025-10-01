@@ -1084,9 +1084,7 @@ Captures user activity: Logs every command executed by users, including those wi
 Feeds Wazuh alerts: Wazuh parses auditd logs (typically from /var/log/audit/audit.log) and applies rules to generate alerts for:
 
  - Privilege escalation
-
  - Unauthorized access
-
  - File tampering
 
 Supports custom rules: You can define your own audit.rules to monitor specific files, directories, or system calls. These can be tagged with keys like audit-wazuh-c for easier filtering and alerting.
@@ -1133,13 +1131,9 @@ To monitor every command executed by root users:
 
 ### Explanation:
 -a exit,always: Log every exit of the specified syscall.
-
 -F arch=b64: Target 64-bit architecture (use b32 for 32-bit systems).
-
 -F euid=0: Filter for effective user ID 0 (root).
-
 -S execve: Monitor the execve syscall (used to execute binaries).
-
 -k audit-wazuh-c: Tag the rule with a key for easy identification in logs and Wazuh alerts.
 
 Why Multiple -F Flags Are Valid Each -F specifies a field filter. When you use more than one, auditd applies all of them together (logical AND).
