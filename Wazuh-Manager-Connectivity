@@ -1,1 +1,8 @@
 # Wazuh Manager Connectivity
+  - 2.1 Change IP agent point toward manager <!--243-->
+  - 2.2 Wazuh dashboard server is not responding to changes  <!--266-->
+  - 2.3 Check Agent Connection from Manage <!--273-->
+  - 2.4 Secure Syslog Configuration for pfSense → Wazuh Manager <!--356-->
+  - 2.5 Ensure IP is static for wazuh  <!-400-->
+  - 2.6 Set static Ip and Confirm DHCP is Off and Static IP is Set  <!--460--> 
+  - 2.7 When nmcli isn’t Available or Used
