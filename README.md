@@ -31,6 +31,7 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
   - Check Wazuh manager working
   - Auditd Tracking system-level events like file access
   - Making rules to detect applications run orsudo operation examples
+  - Check syslog and Enable syslog collection on wazuh
  	
 
 
@@ -1184,8 +1185,7 @@ In /var/ossec/etc/ossec.conf, confirm this block exists:
   <logall>yes</logall>
 </global>
 ```
-**Then restart the manager:
-**
+**Then restart the manager:**
 **sudo systemctl restart wazuh-manager**
 
 ### 4. Check for Log Rotation
