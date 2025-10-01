@@ -20,6 +20,7 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
   - Ensure IP is static for wazuh  <!-400-->
   - Set static Ip and Confirm DHCP is Off and Static IP is Set  <!--460--> 
   - When nmcli isn’t Available or Used
+- [Setup agents and manager for vulnerability scanning](Setup-agents-and-manager-for-vulnerability-scanning/README.md) 
 - Setup agents and manager for vulnerability scanning  <!--569-->
   - Wazuh’s vulnerability detection module reporting outdated CVEs
   - Auditd Tracking system-level events like file access
