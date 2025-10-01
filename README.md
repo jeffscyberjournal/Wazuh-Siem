@@ -12,12 +12,13 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
       - Remove agents Ubuntu
     - Windows installation
       - Remove agent Windows
-- Change IP agent point toward manager <!--243-->
+- Wazuh Manager Connectivity 
+  - Change IP agent point toward manager <!--243-->
   - Wazuh dashboard server is not responding to changes  <!--266-->
   - Check Agent Connection from Manage <!--273-->
   - Secure Syslog Configuration for pfSense → Wazuh Manager <!--356-->
   - Ensure IP is static for wazuh  <!-400-->
-- Set static Ip and Confirm DHCP is Off and Static IP is Set  <!--460--> 
+  - Set static Ip and Confirm DHCP is Off and Static IP is Set  <!--460--> 
   - When nmcli isn’t Available or Used
 - Setup agents and manager for vulnerability scanning  <!--569-->
   - Wazuh’s vulnerability detection module reporting outdated CVEs
