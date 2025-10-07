@@ -1,1 +1,118 @@
 # Linux auditd + Wazuh Integration Guide
+
+This guide explains how to use auditd on Ubuntu to log categorized security events and forward them to a Wazuh manager via the Wazuh agent.
+
+## What is auditd?
+	• auditd is the Linux Audit Daemon.
+	• Logs security-relevant system events: file access, command execution, permission changes, network activity.
+	• Essential for forensics, compliance, and intrusion detection.
+
+## auditctl Rule Syntax Explained
+Flag / Filter	Meaning
+-w	Watch a file or directory for access or changes
+-p	Permissions to monitor: r = read, w = write, x = execute, a = attribute change
+-k	Key name to tag the event for easy searching with ausearch -k
+-a always,exit	Audit every syscall that matches the rule, both on entry and exit
+-F path=...	Filter by file path (e.g., /usr/sbin/sshd)
+-F perm=x	Filter by permission — x means execution
+-F arch=b64	Filter by architecture — b64 for 64-bit, b32 for 32-bit systems
+-F auid>=1000	Filter by audit user ID — only log events from non-system users
+-F auid!=4294967295	Exclude unset or anonymous users (e.g., daemons or failed logins)
+-F a0!=2	Filter syscall argument 0 — exclude socket type AF_INET
+-S execve	Syscall name — monitor command execution
+-S connect	Syscall name — monitor outbound network connections
+
+## Rule Categories with Examples
+
+Authentication & SSH
+
+-w /var/log/auth.log -p wa -k ssh_auth
+-a always,exit -F path=/usr/sbin/sshd -F perm=x -F auid>=1000 -F auid!=4294967295 -k ssh_exec
+
+## File Integrity
+
+`-w /etc/passwd -p wa -k passwd_changes`
+`-w /etc/shadow -p wa -k shadow_mod`
+User Commands
+
+`-a always,exit -F arch=b64 -S execve -F auid>=1000 -F auid!=4294967295 -k user_cmds`
+
+## Config Changes
+
+`-w /etc/ssh/sshd_config -p wa -k ssh_config_mod`
+`-w /etc/audit/audit.rules -p wa -k audit_rule_change`
+
+## Network Activity
+
+`-a always,exit -F arch=b64 -S connect -F a0!=2 -F auid>=1000 -F auid!=4294967295 -k net_connect`
+
+## Setup: Sending auditd Logs to Wazuh Manager
+**1. Install auditd (bash)**
+
+sudo apt update
+sudo apt install auditd audispd-plugins
+
+**2. Define auditd Rules**
+Create /etc/audit/rules.d/custom.rules (bash):
+
+'-w /etc/passwd -p wa -k passwd_changes
+-a always,exit -F path=/usr/sbin/sshd -F perm=x -F auid>=1000 -F auid!=4294967295 -k ssh_exec
+-a always,exit -F arch=b64 -S execve -F auid>=1000 -F auid!=4294967295 -k user_cmds
+
+**Apply rules:**
+
+sudo augenrules --load
+
+**3. Verify auditd Logging (bash)**
+
+sudo ausearch -k passwd_changes
+
+**Audit logs are stored in:**
+
+/var/log/audit/audit.log
+
+**4. Install Wazuh Agent**
+Follow Wazuh’s official guide.
+
+**Register agent:**
+
+`sudo /var/ossec/bin/agent-auth -m <WAZUH_MANAGER_IP>`
+
+**Start agent:**
+
+`sudo systemctl enable wazuh-agent`
+`sudo systemctl start wazuh-agent`
+
+**5. Configure Wazuh Agent to Monitor audit.log**
+
+**Edit /var/ossec/etc/ossec.conf:**
+
+```<localfile>
+  <log_format>audit</log_format>
+  <location>/var/log/audit/audit.log</location>
+</localfile>```
+
+**Restart agent:**
+
+sudo systemctl restart wazuh-agent
+
+**6. Verify Logs on Wazuh Manager**
+
+`tail -f /var/ossec/logs/alerts/alerts.json`
+
+**Look for entries like:**
+
+```Json
+"rule": {
+  "id": 80700,
+  "level": 5,
+  "description": "Audit event detected"
+}```
+
+**Querying auditd Logs Search by key:**
+
+ausearch -k ssh_exec
+
+**Generate reports:**
+
+aureport --file
