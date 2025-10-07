@@ -3,12 +3,12 @@
 This guide explains how to use auditd on Ubuntu to log categorized security events and forward them to a Wazuh manager via the Wazuh agent.
 
 ## What is auditd?
-	• auditd is the Linux Audit Daemon.
-	• Logs security-relevant system events: file access, command execution, permission changes, network activity.
-	• Essential for forensics, compliance, and intrusion detection.
+	- auditd is the Linux Audit Daemon.
+	- Logs security-relevant system events: file access, command execution, permission changes, network activity.
+	- Essential for forensics, compliance, and intrusion detection.
 
 ## auditctl Rule Syntax Explained
-Flag / Filter	Meaning
+```Flag / Filter	Meaning
 -w	Watch a file or directory for access or changes
 -p	Permissions to monitor: r = read, w = write, x = execute, a = attribute change
 -k	Key name to tag the event for easy searching with ausearch -k
@@ -20,14 +20,14 @@ Flag / Filter	Meaning
 -F auid!=4294967295	Exclude unset or anonymous users (e.g., daemons or failed logins)
 -F a0!=2	Filter syscall argument 0 — exclude socket type AF_INET
 -S execve	Syscall name — monitor command execution
--S connect	Syscall name — monitor outbound network connections
+-S connect	Syscall name — monitor outbound network connections```
 
 ## Rule Categories with Examples
 
 Authentication & SSH
 
--w /var/log/auth.log -p wa -k ssh_auth
--a always,exit -F path=/usr/sbin/sshd -F perm=x -F auid>=1000 -F auid!=4294967295 -k ssh_exec
+`-w /var/log/auth.log -p wa -k ssh_auth`
+`-a always,exit -F path=/usr/sbin/sshd -F perm=x -F auid>=1000 -F auid!=4294967295 -k ssh_exec`
 
 ## File Integrity
 
@@ -49,8 +49,8 @@ User Commands
 ## Setup: Sending auditd Logs to Wazuh Manager
 **1. Install auditd (bash)**
 
-sudo apt update
-sudo apt install auditd audispd-plugins
+`sudo apt update`
+`sudo apt install auditd audispd-plugins`
 
 **2. Define auditd Rules**
 Create /etc/audit/rules.d/custom.rules (bash):
@@ -61,7 +61,7 @@ Create /etc/audit/rules.d/custom.rules (bash):
 
 **Apply rules:**
 
-sudo augenrules --load
+`sudo augenrules --load`
 
 **3. Verify auditd Logging (bash)**
 
@@ -94,7 +94,7 @@ Follow Wazuh’s official guide.
 
 **Restart agent:**
 
-sudo systemctl restart wazuh-agent
+`sudo systemctl restart wazuh-agent`
 
 **6. Verify Logs on Wazuh Manager**
 
@@ -111,8 +111,8 @@ sudo systemctl restart wazuh-agent
 
 **Querying auditd Logs Search by key:**
 
-ausearch -k ssh_exec
+`ausearch -k ssh_exec`
 
 **Generate reports:**
 
-aureport --file
+`aureport --file`
