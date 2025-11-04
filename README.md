@@ -23,12 +23,12 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
   - 2.8 Tcpdump test incoming traffic
   - 2.9 pfsense push a single log on port 514 udp to wazuh manager
   - 2.10 Configure alerting based on alert level to email
-- 3.1 [Setup-agents-and-manager-for-vulnerability-scanning/README.md](https://github.com/jeffscyberjournal/Setup-agents-and-manager-for-vulnerability-scanning)
+- 3.1 [Setup-agents-and-manager-for-vulnerability-scanning](https://github.com/jeffscyberjournal/Setup-agents-and-manager-for-vulnerability-scanning)
   - 3.2 Wazuh’s vulnerability detection module reporting outdated CVEs
   - 3.3 auditd + Wazuh Agent Integration (Linux)
   - 3.4 Common Reasons pfSense Logs Don’t Reach Wazuh Manager
   - 3.5 Check syslog and Enable syslog collection on wazuh  
-- 4.0 [Event Logging Guide](Event-Logging/README.md)
+- 4.0 [Event Logging Guide](https://github.com/jeffscyberjournal/Event-Logging)
   - 4.1 Force log gathering from manager to agents
   - 4.2 Check Linux and Windows agent logging
   - 4.3 Check Wazuh manager working
