@@ -1,15 +1,15 @@
-# Event Logging
- - 1. Force log gathering from manager to agents
- - 2. Check Linux and Windows agent logging
- - 3. Check Wazuh manager working
- - 4. Auditd Tracking system-level events like file access
- - 5. Making rules to detect applications run orsudo operation examples
- - 6. Check syslog and Enable syslog collection on wazuh
- - 7. Common Reasons pfSense Logs Don’t Reach Wazuh Manager
- - 8. Tcpdump test incoming traffic
+# 4.0 Event Logging
+ - 4.1 Force log gathering from manager to agents
+ - 4.2 Check Linux and Windows agent logging
+ - 4.3 Check Wazuh manager working
+ - 4.4 Auditd Tracking system-level events like file access
+ - 4.5 Making rules to detect applications run orsudo operation examples
+ - 4.6 Check syslog and Enable syslog collection on wazuh
+ - 4.7 Common Reasons pfSense Logs Don’t Reach Wazuh Manager
+ - 4.8 Tcpdump test incoming traffic
 
 
-## 1. Force Log Gathering from Wazuh Manager to Agents
+## 4.1 Force Log Gathering from Wazuh Manager to Agents
 
 Wazuh manager can push configuration changes—including log collection directives—to agents using centralized management via agent.conf.
 
@@ -77,7 +77,7 @@ Optionally, create a test log entry on the agent and confirm it appears in the m
 
 
 
-## 2. Check Linux and Windows agent logging
+## 4.2 Check Linux and Windows agent logging
 Here’s a step-by-step guide to check if logs are being sent from Wazuh agents **Linux and Windows** and received by the Wazuh manager:
 
 ### **For Linux Devices with Wazuh Agent**
@@ -144,7 +144,7 @@ Here’s a step-by-step guide to check if logs are being sent from Wazuh agents 
 
 
 
-## 3. Check Wazuh manager working
+## 4.3 Check Wazuh manager working
 
 ### 1. **Check Manager Logs**:
    - Review the Wazuh manager logs to confirm that logs are being received from agents:
@@ -178,7 +178,7 @@ Here’s a step-by-step guide to check if logs are being sent from Wazuh agents 
 
 
 
-## 4. Auditd Integration with Wazuh: Tracking System-Level Events
+## 4.4 Auditd Integration with Wazuh: Tracking System-Level Events
 In Wazuh, auditd is the Linux Audit daemon responsible for monitoring low-level system activity. It tracks system calls, file access, command execution, and permission changes. Wazuh integrates with auditd to collect, parse, and alert on these events—making it a powerful tool for security monitoring and compliance.
 
 ### What auditd Does
@@ -253,7 +253,7 @@ This rule helps Wazuh detect when sensitive tools like ncat, tcpdump, or netcat 
 
 
 
-## 5. Making rules to detect applications run orsudo operation examples
+## 4.5 Making rules to detect applications run orsudo operation examples
 
 ### 1. Create audit rules
 Append these lines to your audit rules file (e.g., /etc/audit/rules.d/audit.rules):
@@ -283,7 +283,7 @@ This setup ensures Wazuh (via auditd) can alert you when these tools are execute
 
 
 
-## 6. Check syslog and Enable syslog collection on wazuh
+## 4.6 Check syslog and Enable syslog collection on wazuh
 Troubleshooting Access to archives.log
 ### 1. Check File Existence
 Run:
@@ -316,7 +316,7 @@ You might find archives.log.1, .gz, or other rotated versions.
 
 
 
-## 7. Common Reasons pfSense Logs Don’t Reach Wazuh Manager
+## 4.7 Common Reasons pfSense Logs Don’t Reach Wazuh Manager
 ### 1. Remote Logging Misconfiguration
  -  Go to Status → System Logs → Settings → Remote Logging Options
  -  Enable Remote Logging
@@ -339,7 +339,7 @@ You might find archives.log.1, .gz, or other rotated versions.
 
 
 
-## 8.  Tcpdump test incoming traffic
+## 4.8  Tcpdump test incoming traffic
 
 To capture ICMP packets from 192.168.0.254 using tcpdump, you can run:
 
