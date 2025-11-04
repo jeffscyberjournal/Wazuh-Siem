@@ -5,7 +5,7 @@
 The goal of this project was to gain hands-on experience with SIEM by deploying Wazuh using its official OVA package. This involved exploring its core capabilities, understanding log ingestion and analysis workflows, and ultimately integrating Wazuh with my home lab environment—including a pfSense firewall—for real-time telemetry and threat detection.
 
 ## Sections learned about wazuh
-- [Installation Of Agents](Installation-of-agents/README.md)
+- [Installation-of-agents](https://github.com/jeffscyberjournal/Installation-of-agents)
   - 2.1 Install and update using OVA 
   - 2.2 Installing agents 
     - 2.2.1 Ubuntu linux (DEBIAN) installation 
