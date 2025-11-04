@@ -28,16 +28,14 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
   - 3.3 auditd + Wazuh Agent Integration (Linux)
   - 3.4 Common Reasons pfSense Logs Don’t Reach Wazuh Manager
   - 3.5 Check syslog and Enable syslog collection on wazuh  
-- [Event Logging Guide](Event-Logging/README.md)
-  - 2.1 Change IP agent point toward manager 
-  - 2.2 Wazuh dashboard server is not responding to changes  
-  - 2.3 Check Agent Connection from Manage 
-  - 2.4 Secure Syslog Configuration for pfSense → Wazuh Manager 
-  - 2.5 Ensure IP is static for wazuh 
-  - 2.6 Set static Ip and Confirm DHCP is Off and Static IP is Set  
-  - 2.7 When nmcli isn’t Available or Used
-  - 2.8 Tcpdump test incoming traffic
-  - 2.9 pfsense push a single log on port 514 udp to wazuh manager
-  - 2.10 Configure alerting based on alert level to email
+- 4.0 [Event Logging Guide](Event-Logging/README.md)
+  - 4.1 Force log gathering from manager to agents
+  - 4.2 Check Linux and Windows agent logging
+  - 4.3 Check Wazuh manager working
+  - 4.4 Auditd Tracking system-level events like file access
+  - 4.5 Making rules to detect applications run orsudo operation examples
+  - 4.6 Check syslog and Enable syslog collection on wazuh
+  - 4.7 Common Reasons pfSense Logs Don’t Reach Wazuh Manager
+  - 4.8 Tcpdump test incoming traffic
 
  	
