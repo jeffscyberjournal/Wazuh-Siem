@@ -17,7 +17,7 @@ The goal of this project was to gain hands-on experience with SIEM by deploying 
   - 2.2 Wazuh dashboard server is not responding to changes
   - 2.3 Check Agent Connection from Manage
   - 2.4 Secure Syslog Configuration for pfSense → Wazuh Manager
-  - 2.5 Ensure IP is static for wazuh <!-184-->
+  - 2.5 Ensure IP is static for wazuh <!--184-->
   - 2.6 Set static Ip and Confirm DHCP is Off and Static IP is Set
   - 2.7 When nmcli isn’t Available or Used
   - 2.8 Tcpdump test incoming traffic
