@@ -1,10 +1,12 @@
 # 2.0 Installation of agents
-  - 2.1 Install and update using OVA <!--29-->
-  - 2.2 Installing agents <!--85-->
-    - 2.2.1 Ubuntu linux (DEBIAN) installation 
-    - 2.2.2 Remove agents Ubuntu
-    - 2.2.3 Windows installation
-    - 2.2.4 Remove agent Windows
+  - 2.1 Install and update using OVA <!--11-->
+  - 2.2 Installing agents <!--71-->
+    - 2.2.1 Ubuntu linux (DEBIAN) installation <!--76-->
+    - 2.2.2 Remove agents Ubuntu <!--111-->
+    - 2.2.3 Windows installation <!--174-->
+    - 2.2.4 Remove agent Windows <!--202-->
+
+---
 
 ## 2.1 Install and update using OVA
 So far I tried installation on proxmox and virtualbox installations:
@@ -31,7 +33,7 @@ Download: the Wazuh OVA file from the official Wazuh website.
 Import: the OVA directly into VMware ESXi using the platform's interface, typically via the "File > Open" or similar "Import Appliance" optio
 
 
-
+---
 
 ## update using OVA
 
@@ -64,10 +66,12 @@ sudo systemctl start wazuh-dashboard
 If you’re running a multi-node setup or using custom configurations, it’s best to follow the official Wazuh upgrade guide to avoid version mismatches or config overwrites.
 
 
-
+---
 
 ## 2.2 Installing agents
 This section covers basic agent installation on Ubuntu (Debian-based) and Windows systems, as part of integrating Wazuh into a home lab SIEM setup. Here is the manual method as apposed to the method through wazuh interface. I found the wazuh interface did not work well for Ubuntu agent and required either installation of agent from the Wazuh home page or using a manual install. Installing the agents appeared straight forward through the wazuh interface, working perfectly for Windows except Ubuntu agent seemed to fail. The following manual method works fine for either.
+
+---
 
 ## 2.2.1 Ubuntu (Debian-based)
 
@@ -102,6 +106,7 @@ nano /var/ossec/etc/ossec.conf
 
 sudo systemctl restart wazuh-agent
 
+---
 
 ## 2.2.2 Remove agents Ubuntu
 
@@ -164,6 +169,7 @@ sudo rm -rf /var/ossec/
 
 For more details, check out [this guide](https://documentation.wazuh.com/current/installation-guide/uninstalling-wazuh/agent.html) or [this documentation](https://documentation.wazuh.com/current/user-manual/agent/agent-management/remove-agents/remove.html). 
 
+---
 
 ## 2.2.3 Windows:
 Install Wazuh Agent (using powershell):
@@ -191,6 +197,7 @@ C:\Program Files (x86)\ossec-agent\ossec.conf
 
 Restart-Service -Name wazuh
 
+---
 
 ## 2.2.4 Remove agent Windows
 
